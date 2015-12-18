@@ -1,4 +1,3 @@
-
 /* BeginDocumentation
  * Name: main
  *
@@ -13,81 +12,101 @@
  */
 
 #include "../CImg-1.6.0_rolling141127/CImg.h"
-#include "dirent.h"
 #include "InterfaceNEST.h"
 #include "constants.h"
+#include <boost/filesystem.hpp>
+#include <boost/python.hpp>
 
 using namespace cimg_library;
 using namespace std;
 
+namespace fs = boost::filesystem;
+namespace py = boost::python;
+
+// create a dummy image with a moving red pixel
+CImg<double>* custom_img(int currTime) {
+    CImg<double>* retval = new CImg<double>(25, 25, 1, 3);
+    for (unsigned int i = 0; i < retval->width(); i++) {
+        for (unsigned int j = 0; j < retval->height(); j++) {
+            (*retval)(i, j, 0, 0) = (*retval)(i, j, 0, 1) = (*retval)(i, j, 0, 2) = 255;
+        }
+    }
+
+    (*retval)(currTime % retval->width(), currTime % retval->height(), 0, 0) = 255;
+    (*retval)(currTime % retval->width(), currTime % retval->height(), 0, 1) = 0;
+    (*retval)(currTime % retval->width(), currTime % retval->height(), 0, 2) = 0;
+    return retval;
+}
 
 // main
 int main(int argc, char *argv[])
 {
-
-    string currentDirRoot = constants::getPath();
+    #ifdef USE_PYTHON_INTERPRETOR
+    Py_Initialize();
+    #endif
+    // string currentDirRoot = constants::getPath();
+    // Assuming the executable will be generated and executed in /build
+    fs::path currentDirRoot = fs::initial_path() / "..";
+    cout << currentDirRoot.string() << endl;
 
     // delete files in results folder (if any)
-    DIR *dir;
-    struct dirent *ent;
-    string resdir = currentDirRoot+"results/";
-    const char * charesdir = (resdir).c_str();
-
-    if ((dir = opendir (charesdir)) != NULL) {
-        int files = 0;
-        while ((ent = readdir (dir)) != NULL) {
-            files+=1;
-          }
-
-        if(files > 2){
-            string results = "exec rm "+currentDirRoot+"results/*";
-            const char * todelete = (results).c_str();
-            system(todelete);
-        }
-
-    }closedir (dir);
+    fs::path resultsDir = currentDirRoot / "results";
+    fs::remove_all(resultsDir);
 
     // Create retina interface
-    string retinaString;
+    fs::path retinaString;
 
     // read arguments or default script
-    if (argc==1){
-        retinaString = currentDirRoot + constants::retinaScript;
-    }else{
-        retinaString = currentDirRoot + "Retina_scripts/" + (string)argv[1];
+    if (argc == 1) {
+        retinaString = currentDirRoot / constants::retinaScript;
+    } else {
+        retinaString = currentDirRoot / "Retina_scripts" / (string)argv[1];
     }
 
     const char * retinaSim = retinaString.c_str();
 
     InterfaceNEST interface;
-    interface.allocateValues(retinaSim,constants::resultID,constants::outputfactor,0);
+    interface.allocateValues(retinaSim, constants::resultID, constants::outputfactor, 0);
 
     // Read number of trials and simulation time
     double trials = interface.getTotalNumberTrials();
     int simTime = interface.getSimTime();
     double simStep = interface.getSimStep();
 
-    cout << "Simulation time: "<< simTime << endl;
-    cout << "Trials: "<< trials << endl;
-    cout << "Simulation step: "<< simStep << endl;
+    cout << "Simulation time: " << simTime << endl;
+    cout << "Trials: " << trials << endl;
+    cout << "Simulation step: " << simStep << endl;
 
     // Simulation
-    for(int i=0;i<trials;i++){
+    for (unsigned int i = 0; i < trials; i++){
 
         // Create new retina interface for every trial (reset values)
         InterfaceNEST interface;
-        interface.allocateValues(retinaSim,constants::resultID,constants::outputfactor,i);
+        interface.allocateValues(retinaSim, constants::resultID, constants::outputfactor, i);
 
-        cout << "-- Trial "<< i << " --" << endl;
+        cout << "-- Trial " << i << " --" << endl;
 
-        if(interface.getAbortExecution()==false){
-            for(int k=0;k<simTime;k+=simStep){
-                interface.update();
+        if(interface.getAbortExecution() == false){
+            for(int k = 0; k < simTime; k += simStep){
+                // interface.update();
+                CImg<double> *a = custom_img(k);
+                CImg<double> *input = interface.retina.feedInput(a);
+                interface.retina.update();
+                interface.displayMg.updateDisplay(a,
+                    interface.retina,
+                    interface.SimTime,
+                    interface.totalSimTime,
+                    interface.CurrentTrial,
+                    interface.totalNumberTrials);
+                interface.SimTime+=interface.step;
             }
         }
 
     }
 
+    #ifdef USE_PYTHON_INTERPRETOR
+    Py_Finalize();
+    #endif
 
-   return 1;
+    return 0;
 }

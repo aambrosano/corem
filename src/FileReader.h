@@ -15,9 +15,15 @@
 #include "DisplayManager.h"
 #include "StaticNonLinearity.h"
 #include "ShortTermPlasticity.h"
+#include "Retina.h"
+#include <boost/python.hpp>
+#include <boost/filesystem.hpp>
+#include <fstream>
 
 using namespace cimg_library;
 using namespace std;
+namespace py = boost::python;
+namespace fs = boost::filesystem;
 
 // fixed parameters
 const int MAX_CHARS_PER_LINE = 2048;
@@ -33,7 +39,7 @@ private:
     bool continueReading;
 
     // File reader
-    const char* fileName;
+    fs::path fileName;
     ifstream fin;
 
 public:
@@ -46,7 +52,7 @@ public:
     //reset parameters
     void reset(int X, int Y, double tstep);
     //set directory
-    void setDir(const char* s);
+    void setDir(fs::path path);
     // allocate values
     void allocateValues();
 

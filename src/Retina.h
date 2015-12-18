@@ -27,15 +27,18 @@
 #include "whiteNoise.h"
 #include "impulse.h"
 
+#include <boost/python.hpp>
+
 using namespace cimg_library;
 using namespace std;
+namespace py = boost::python;
 
 class Retina{
 protected:
     // Image size
     int sizeX, sizeY;
     // simulation step and ppd
-    double step;
+    // double step;
     double pixelsPerDegree;
 
     // Retina output and accumulator of intermediate images
@@ -70,6 +73,8 @@ protected:
     bool verbose;
 
 public:
+    double step;
+
     // Constructor, copy, destructor.
     Retina(int x=1,int y=1,double temporal_step=1.0);
     Retina(const Retina& copy);
@@ -79,9 +84,9 @@ public:
 
     // Allocate values and set protected parameters
     void allocateValues();
-    Retina& setSizeX(int x);
-    Retina& setSizeY(int y);
-    Retina& set_step(double temporal_step);
+    void setSizeX(int x);
+    void setSizeY(int y);
+    void set_step(double temporal_step);
     int getSizeX();
     int getSizeY();
     double getStep();
@@ -95,6 +100,8 @@ public:
     // set and get pixelsPerDegree
     Retina& setPixelsPerDegree(double ppd);
     double getPixelsPerDegree();
+    // feedInput accepting a custom image
+    CImg<double> *feedInput(CImg<double>* img);
     // New input and update of equations
     CImg<double> *feedInput(int step);
     void update();

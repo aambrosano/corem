@@ -190,6 +190,8 @@ void DisplayManager::modifyLN(string moduleID, double start, double stop){
 
 void DisplayManager::addModule(int pos,string ID){
 
+    cout << "addModule " << pos << " " << ID << endl;
+
     // Input
     if(displays.size()==0){
 
@@ -275,7 +277,6 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
 
     // Display input
     if(isShown[0]){
-
         CImgDisplay *d0 = displays[0];
         *inputImage = *input;
 

@@ -70,19 +70,19 @@ void Retina::reset(int x,int y,double temporal_step){
 
 //------------------------------------------------------------------------------//
 
-Retina& Retina::setSizeX(int x){
+void Retina::setSizeX(int x){
     if (x>0){
         sizeX = x;
     }
 }
 
-Retina& Retina::setSizeY(int y){
+void Retina::setSizeY(int y){
     if (y>0){
         sizeY = y;
     }
 }
 
-Retina& Retina::set_step(double temporal_step) {
+void Retina::set_step(double temporal_step) {
     if (temporal_step>0){
         step = temporal_step;
     }
@@ -168,6 +168,106 @@ void Retina::allocateValues(){
 }
 
 
+CImg<double> *Retina::feedInput(CImg<double>* input) {
+    if (input->size()==sizeX*sizeY){
+        // Separate color channels
+        cimg_forXY(*input,x,y) {
+            RGBred(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
+            RGBgreen(x,y,0,0) = (*input)(x,y,0,0),    // Green component of image sent to imgG
+            RGBblue(x,y,0,0) = (*input)(x,y,0,0);    // Blue component of image sent to imgB
+        }
+    }else{
+       // Separate color channels
+       cimg_forXY(*input,x,y) {
+           RGBred(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
+           RGBgreen(x,y,0,0) = (*input)(x,y,0,1),    // Green component of image sent to imgG
+           RGBblue(x,y,0,0) = (*input)(x,y,0,2);    // Blue component of image sent to imgB
+       }
+    }
+    // Hunt-Pointer-Estévez (HPE) transform
+    // sRGB --> XYZ
+    X_mat = 0.4124564*RGBblue + 0.3575761*RGBgreen + 0.1804375*RGBred;
+    Y_mat = 0.2126729*RGBblue + 0.7151522*RGBgreen + 0.0721750*RGBred;
+    Z_mat = 0.0193339*RGBblue + 0.1191920*RGBgreen + 0.9503041*RGBred;
+
+    // XYZ --> LMS
+    ch1 = 0.38971*X_mat + 0.68898*Y_mat - 0.07868*Z_mat;
+    ch2 = -0.22981*X_mat + 1.1834*Y_mat + 0.04641*Z_mat;
+    ch3 = Z_mat;
+
+    rods = (ch1+ch2+ch3)/3;
+
+    for (int i=1;i<modules.size();i++){
+
+        module* neuron = modules[i];
+        int number_of_ports = neuron->getSizeID();
+
+        // port search
+        for (int o=0;o<number_of_ports;o++){
+
+            vector <string> l = neuron->getID(o);
+            vector <int> p = neuron->getOperation(o);
+
+            //image input
+            const char * cellName = l[0].c_str();
+
+            if(strcmp(cellName,"L_cones")==0){
+                    accumulator=ch3;
+            }else if(strcmp(cellName,"M_cones")==0){
+                    accumulator=ch2;
+            }else if(strcmp(cellName,"S_cones")==0){
+                    accumulator=ch1;
+            }else if(strcmp(cellName,"rods")==0){
+                    accumulator=rods;
+            }else{
+
+            // other inputs rather than cones or rods
+
+                //search for the first image
+                for (int m=1;m<modules.size();m++){
+                    module* n = modules[m];
+                    const char * cellName1 = l[0].c_str();
+                    const char * cellName2 = (n->getModuleID()).c_str();
+                    if (strcmp(cellName1,cellName2)==0){
+                        accumulator = *(n->getOutput());
+                        break;
+                    }
+                }
+
+
+                //other operations
+                for (int k=1;k<l.size();k++){
+
+                    for (int m=1;m<modules.size();m++){
+                        module* n = modules[m];
+                        const char * cellName1 = l[k].c_str();
+                        const char * cellName2 = (n->getModuleID()).c_str();
+                        if (strcmp(cellName1,cellName2)==0){
+
+                           if (p[k-1]==0){
+                                accumulator += *(n->getOutput());
+                            }else{
+                                accumulator -= *(n->getOutput());
+                            }
+                           break;
+                        }
+                    }
+
+                }
+
+        }
+
+            if (neuron->getTypeSynapse(o)==0)
+                neuron->feedInput(accumulator,true,o);
+            else
+                neuron->feedInput(accumulator,false,o);
+
+        }
+    }
+
+    return input;
+}
+
 //------------------------------------------------------------------------------//
 
 CImg<double> *Retina::feedInput(int step){
@@ -211,105 +311,7 @@ CImg<double> *Retina::feedInput(int step){
         break;
     }
 
-
-    if (input->size()==sizeX*sizeY){
-        // Separate color channels
-        cimg_forXY(*input,x,y) {
-            RGBred(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
-            RGBgreen(x,y,0,0) = (*input)(x,y,0,0),    // Green component of image sent to imgG
-            RGBblue(x,y,0,0) = (*input)(x,y,0,0);    // Blue component of image sent to imgB
-        }
-    }else{
-       // Separate color channels
-       cimg_forXY(*input,x,y) {
-           RGBred(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
-           RGBgreen(x,y,0,0) = (*input)(x,y,0,1),    // Green component of image sent to imgG
-           RGBblue(x,y,0,0) = (*input)(x,y,0,2);    // Blue component of image sent to imgB
-       }
-    }
-    // Hunt-Pointer-Estévez (HPE) transform
-    // sRGB --> XYZ
-    X_mat = 0.4124564*RGBblue + 0.3575761*RGBgreen + 0.1804375*RGBred;
-    Y_mat = 0.2126729*RGBblue + 0.7151522*RGBgreen + 0.0721750*RGBred;
-    Z_mat = 0.0193339*RGBblue + 0.1191920*RGBgreen + 0.9503041*RGBred;
-
-    // XYZ --> LMS
-    ch1 = 0.38971*X_mat + 0.68898*Y_mat - 0.07868*Z_mat;
-    ch2 = -0.22981*X_mat + 1.1834*Y_mat + 0.04641*Z_mat;
-    ch3 = Z_mat;
-
-    rods = (ch1+ch2+ch3)/3;
-
-for (int i=1;i<modules.size();i++){
-
-    module* neuron = modules[i];
-    int number_of_ports = neuron->getSizeID();
-
-    // port search
-    for (int o=0;o<number_of_ports;o++){
-
-        vector <string> l = neuron->getID(o);
-        vector <int> p = neuron->getOperation(o);
-
-        //image input
-        const char * cellName = l[0].c_str();
-
-        if(strcmp(cellName,"L_cones")==0){
-                accumulator=ch3;
-        }else if(strcmp(cellName,"M_cones")==0){
-                accumulator=ch2;
-        }else if(strcmp(cellName,"S_cones")==0){
-                accumulator=ch1;
-        }else if(strcmp(cellName,"rods")==0){
-                accumulator=rods;
-        }else{
-
-        // other inputs rather than cones or rods
-
-            //search for the first image
-            for (int m=1;m<modules.size();m++){
-                module* n = modules[m];
-                const char * cellName1 = l[0].c_str();
-                const char * cellName2 = (n->getModuleID()).c_str();
-                if (strcmp(cellName1,cellName2)==0){
-                    accumulator = *(n->getOutput());
-                    break;
-                }
-            }
-
-
-            //other operations
-            for (int k=1;k<l.size();k++){
-
-                for (int m=1;m<modules.size();m++){
-                    module* n = modules[m];
-                    const char * cellName1 = l[k].c_str();
-                    const char * cellName2 = (n->getModuleID()).c_str();
-                    if (strcmp(cellName1,cellName2)==0){
-
-                       if (p[k-1]==0){
-                            accumulator += *(n->getOutput());
-                        }else{
-                            accumulator -= *(n->getOutput());
-                        }
-                       break;
-                    }
-                }
-
-            }
-
-    }
-
-        if (neuron->getTypeSynapse(o)==0)
-            neuron->feedInput(accumulator,true,o);
-        else
-            neuron->feedInput(accumulator,false,o);
-
-    }
-}
-
-
-
+    this->feedInput(input);
     return input;
 }
 
@@ -572,3 +574,13 @@ CImg <double>* Retina::updateFixGrating(double t){
     return fg->compute_grating(t);
 }
 
+BOOST_PYTHON_MODULE(retina)
+{
+    // py::to_python_converter<retina_to_pyretina>();
+
+    py::class_<Retina>("Retina")
+        //.def_readwrite("step", &Retina::step);
+        .add_property("step",
+          py::make_getter(&Retina::step,
+                          py::return_value_policy<py::return_by_value>()));
+}

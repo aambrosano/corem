@@ -23,26 +23,65 @@ FileReader::~FileReader(void){
 //-------------------------------------------------//
 
 
-void FileReader::setDir(const char *s){
-    fileName = s;
+void FileReader::setDir(fs::path path){
+    fileName = path;
 }
 
 //-------------------------------------------------//
 
 void FileReader::allocateValues(){
+    if (fs::exists(fileName)) {
+        fin.open(fileName.c_str());
+    }
+    else {
+        cout << "Wrong retina file path." << endl;
+        CorrectFile = false;
+        continueReading = false;
+    }
 
-    fin.open(fileName);
+    /*
+    fin.open(fileName.c_str());
 
-      if (!fin.good()) {
-          cout << "Wrong retina file path." << endl;
-          CorrectFile = false;
-          continueReading = false;
-      }
+    if (!fin.good()) {
+        cout << "Wrong retina file path." << endl;
+        CorrectFile = false;
+        continueReading = false;
+    }
+    */
 }
 
 //-------------------------------------------------//
 
 void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
+    #ifdef USE_PYTHON_INTERPRETOR
+    // interpreting the retina scripts as real python files instead of parsing them
+    ifstream in(fileName.c_str());
+    string contents((istreambuf_iterator<char>(in)),
+        istreambuf_iterator<char>());
+    try {
+        auto py__main__ = py::import("__main__");
+        auto pyretina = py::import("retina");
+        py__main__.attr("retina") = py::ptr(&retina);
+        PyRun_SimpleString(contents.c_str());
+    } catch(py::error_already_set const &) {
+        PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
+        PyErr_Fetch(&type_ptr, &value_ptr, &traceback_ptr);
+        std::string err("Unfetchable Python error");
+        if(type_ptr != NULL){
+            py::handle<> h_type(type_ptr);
+            py::str type_pstr(h_type);
+            py::extract<std::string> e_type_pstr(type_pstr);
+            if(e_type_pstr.check())
+                err = e_type_pstr();
+            else
+                err = "Unknown exception type";
+        }
+        std::cout << "Error in Python: " << err << std::endl;
+
+        std::string exception_msg = py::extract<std::string>(value_ptr);
+        std::cout << exception_msg << std::endl;
+    }
+    #endif
 
     double verbose = false;
     int line = 0;
@@ -95,7 +134,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
                         if ( strcmp(token[1], "Create") == 0 ){
                             action = 1;
                         }
-                        else if( strcmp(token[1], "Connect") == 0 ){                          
+                        else if( strcmp(token[1], "Connect") == 0 ){
                             action = 2;
                         }
                         else if( strcmp(token[1], "TempStep") == 0 ){
@@ -739,5 +778,3 @@ void FileReader::abort(int line){
     continueReading = false;
 
 }
-
-

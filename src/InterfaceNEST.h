@@ -25,7 +25,7 @@ using namespace cimg_library;
 using namespace std;
 
 class InterfaceNEST{
-protected:
+public:
     // Image size (sizeY = width, sizeX = height)
     int sizeX, sizeY;
     // simulation step

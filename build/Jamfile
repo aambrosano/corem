@@ -1,0 +1,28 @@
+using gcc : : g++ : cxxflags -std=c++11 ;
+using python : python2.7 ;
+
+import feature ;
+feature.feature cpp11 :
+    on :
+    composite optional propagated
+    ;
+
+feature.compose <cpp11>on :
+        <cxxflags>"-std=c++11"
+        <define>BOOST_NO_CXX11_NUMERIC_LIMITS=1
+        <linkflags>"-lboost_python -lX11"
+    ;
+
+project retina
+  : source-location ../src
+  : requirements
+    <cpp11>on
+  ;
+
+python-extension retina :
+  Retina.cpp 
+  fixationalMovGrating.cpp 
+  GratingGenerator.cpp 
+  impulse.cpp 
+  whiteNoise.cpp 
+  module.cpp ;
