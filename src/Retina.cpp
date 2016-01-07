@@ -244,14 +244,12 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
                     }
 
                 }
-
-        }
+            }
 
             if (neuron->getTypeSynapse(o)==0)
                 neuron->feedInput(accumulator,true,o);
             else
                 neuron->feedInput(accumulator,false,o);
-
         }
     }
 
@@ -302,8 +300,7 @@ CImg<double> *Retina::feedInput(int step){
         break;
     }
 
-    this->feedInput(input);
-    return input;
+    return this->feedInput(input);
 }
 
 
@@ -563,15 +560,4 @@ bool Retina::generateFixationalMovGrating(int X, int Y, double radius, double ji
 
 CImg <double>* Retina::updateFixGrating(double t){
     return fg->compute_grating(t);
-}
-
-BOOST_PYTHON_MODULE(retina)
-{
-    // py::to_python_converter<retina_to_pyretina>();
-
-    py::class_<Retina>("Retina")
-        //.def_readwrite("step", &Retina::step);
-        .add_property("step",
-          py::make_getter(&Retina::step,
-                          py::return_value_policy<py::return_by_value>()));
 }

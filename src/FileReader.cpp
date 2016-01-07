@@ -1,4 +1,5 @@
 #include "FileReader.h"
+#include "python_bindings/PythonRetina.h"
 
 FileReader::FileReader() {
     CorrectFile = true;
@@ -30,16 +31,6 @@ void FileReader::allocateValues(){
         CorrectFile = false;
         continueReading = false;
     }
-
-    /*
-    fin.open(fileName.c_str());
-
-    if (!fin.good()) {
-        cout << "Wrong retina file path." << endl;
-        CorrectFile = false;
-        continueReading = false;
-    }
-    */
 }
 
 //-------------------------------------------------//
@@ -53,7 +44,8 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
     try {
         auto py__main__ = py::import("__main__");
         auto pyretina = py::import("retina");
-        py__main__.attr("retina") = py::ptr(&retina);
+        PythonRetina* pr = new PythonRetina(retina, displayMg);
+        py__main__.attr("retina") = py::ptr(pr);
         PyRun_SimpleString(contents.c_str());
     } catch(py::error_already_set const &) {
         PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
@@ -73,8 +65,7 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
         std::string exception_msg = py::extract<std::string>(value_ptr);
         std::cout << exception_msg << std::endl;
     }
-    #endif
-
+    #else
     double verbose = false;
     int line = 0;
     int action = 0;
@@ -756,10 +747,9 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
 
     }//end while
 
-
     // close file
     fin.close();
-
+    #endif
 }
 
 //-------------------------------------------------//

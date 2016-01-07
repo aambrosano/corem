@@ -276,11 +276,13 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
         min = findMin(inputImage);
         max = findMax(inputImage);
 
-        inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,0,false);
-        (((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX)).display(*d0);
+        // This is ok for custom images
+        inputImage->display(*d0);
 
+        // This was not
+        /*inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,0,false);
+        (((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX)).display(*d0);*/
     }
-
 
     // Update windows
     if (step==0){
@@ -348,13 +350,11 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
         }
     }
 
-
     // update multimeters
     for (unsigned int i = 0; i < multimeters.size(); i++){
         multimeter *m = multimeters[i];
         module *n = nullptr;
         const char * moduleID = (moduleIDs[i]).c_str();
-
         // find target module
         if(strcmp(moduleID, "Input") != 0){
             for(int j=1;j<retina.getNumberModules();j++){
@@ -413,9 +413,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
             }
         }
 
-
     }
-
 
     // display temporal and LN multimeters for the last simulation step
     if (step == totalSimTime - simStep) {
@@ -486,7 +484,6 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     // Show displays if there's an input display
         if(isShown[0])
             displays[0]->wait(delay);
-
 }
 
 //------------------------------------------------------------------------------//

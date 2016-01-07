@@ -88,11 +88,14 @@ int main(int argc, char *argv[])
 
         if(interface.getAbortExecution() == false){
             for(int k = 0; k < simTime; k += simStep){
+                // Uses images from the conf file
                 // interface.update();
+
+                // Custom images
                 CImg<double> *a = custom_img(k);
-                CImg<double> *input = interface.retina.feedInput(a); input = input;
+                CImg<double> *input = interface.retina.feedInput(a);
                 interface.retina.update();
-                interface.displayMg.updateDisplay(a,
+                interface.displayMg.updateDisplay(input,
                     interface.retina,
                     interface.SimTime,
                     interface.totalSimTime,

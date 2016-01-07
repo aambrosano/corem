@@ -60,7 +60,6 @@ void StaticNonLinearity::update(){
             }
         }
 
-
         (*inputImage)*=slope[0];
         (*inputImage)+=offset[0];
         inputImage->pow(exponent[0]);

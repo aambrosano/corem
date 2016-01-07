@@ -20,8 +20,8 @@
 #define PATH_MAX 4096
 
 // numerical constants
-#define PI	M_PI
-#define TWOPI	(2.0*PI)
+#define PI M_PI
+#define TWOPI (2.0*PI)
 #define DBL_EPSILON 1.0e-9
 #define DBL_INF 1.0e9
 #define USE_PYTHON_INTERPRETER false
@@ -33,8 +33,6 @@ namespace constants{
     extern const double outputfactor;
 
     std::string getPath();
-
 }
-
 
 #endif // CONSTANTS_H
