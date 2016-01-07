@@ -41,9 +41,8 @@ CImg<double>* custom_img(int currTime) {
 // main
 int main(int argc, char *argv[])
 {
-    #ifdef USE_PYTHON_INTERPRETER
     Py_Initialize();
-    #endif
+
     // string currentDirRoot = constants::getPath();
     // Assuming the executable will be generated and executed in /build
     fs::path currentDirRoot = fs::initial_path() / "..";
@@ -107,9 +106,7 @@ int main(int argc, char *argv[])
 
     }
 
-    #ifdef USE_PYTHON_INTERPRETER
     Py_Finalize();
-    #endif
 
     return 0;
 }

@@ -2,11 +2,8 @@
 
 namespace constants{
     std::string retinaFolder = "COREM";
-    #if PYTHON
     std::string retinaScript = "Retina_scripts/example_1.real.py";
-    #else
-    std::string retinaScript = "Retina_scripts/example_1.py";
-    #endif
+
     const char* resultID = "contrast";
     const double outputfactor = 50.0; // to scale LN analysis
 

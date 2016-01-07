@@ -25,14 +25,6 @@ using namespace std;
 namespace py = boost::python;
 namespace fs = boost::filesystem;
 
-#if !PYTHON
-// fixed parameters
-const int MAX_CHARS_PER_LINE = 2048;
-const int MAX_TOKENS_PER_LINE = 50;
-const char* const DELIMITER1 = ".(),'";
-const char* const DELIMITER2 = ",')";
-#endif
-
 class FileReader{
 private:
     // to check syntax errors
