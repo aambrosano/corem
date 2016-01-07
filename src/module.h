@@ -39,13 +39,11 @@ protected:
 public:
     // Constructor, copy, destructor.
     module(int x=1,int y=1,double temporal_step=1.0);
-    module(const module& copy);
-    ~module(void);
 
     // set protected parameters
-    module& setSizeX(int x);
-    module& setSizeY(int y);
-    module& set_step(double temporal_step);
+    void setSizeX(int x);
+    void setSizeY(int y);
+    void set_step(double temporal_step);
 
     // add operations or ID of input modules
     void addOperation(vector <int> ops){portArith.push_back(ops);}
@@ -77,17 +75,17 @@ public:
 
     // virtual functions //
     // Allocate values
-    virtual void allocateValues(){}
-    virtual void setX(int x){}
-    virtual void setY(int y){}
+    virtual void allocateValues() {}
+    virtual void setX(int) {}
+    virtual void setY(int) {}
     // New input and update of equations
-    virtual void feedInput(const CImg<double>& new_input, bool isCurrent, int port){}
-    virtual void update(){}
+    virtual void feedInput(const CImg<double>&, bool, int) {}
+    virtual void update() {}
     // Get output image (y(k))
-    virtual CImg<double>* getOutput(){}
+    virtual CImg<double>* getOutput() { return nullptr; }
     // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID){}
-    virtual void clearParameters(vector<string> paramID){}
+    virtual bool setParameters(vector<double>, vector<string>) { return true; }
+    virtual void clearParameters(vector<string>) {}
 };
 
 #endif // MODULE_H

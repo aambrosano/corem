@@ -60,8 +60,6 @@ protected:
 public:
     // Constructor, copy, destructor.
     fixationalMovGrating(int X=25,int Y=25,double radius=1.0,double jitter = 15.0,double period = 10.0,double step = 1.0,double luminance = 100.0,double contrast = 0.5,double orientation = 0.0,double red_weight=1.0,double green_weigh=1.0, double blue_weight=1.0,int t1 = 0,int t2 = 0,int ts = 0);
-    fixationalMovGrating(const fixationalMovGrating& copy);
-    ~fixationalMovGrating(void);
 
     // update the grating
     CImg<double> *compute_grating(double t);

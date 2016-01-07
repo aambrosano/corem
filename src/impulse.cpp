@@ -15,14 +15,6 @@ impulse::impulse(double startParam, double stopParam, double amplitudeParam, dou
     }
 }
 
-impulse::impulse(const impulse& copy){
-
-}
-
-impulse::~impulse(void){
-
-}
-
 //------------------------------------------------------------------------------//
 
 CImg<double>* impulse::update(double t){

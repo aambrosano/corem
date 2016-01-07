@@ -44,14 +44,12 @@ private:
 
 public:
 
-    //Constructor, copy, destructor.
-    FileReader(int X=25, int Y=25, double tstep=1.0);
-    FileReader(const FileReader& copy);
-    ~FileReader(void);
+    // Constructor
+    FileReader();
 
-    //reset parameters
-    void reset(int X, int Y, double tstep);
-    //set directory
+    // reset parameters
+    void reset();
+    // set directory
     void setDir(fs::path path);
     // allocate values
     void allocateValues();

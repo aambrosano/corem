@@ -53,10 +53,8 @@ protected:
 
 public:
 
-    // Constructor, copy, destructor.
+    // Constructor
     multimeter(int x=1,int y=1);
-    multimeter(const multimeter& copy);
-    ~multimeter(void);
 
     // Spatial multimeter
     void showSpatialProfile(CImg<double> img,bool rowCol,int number,string title,int col,int row,double waitTime);

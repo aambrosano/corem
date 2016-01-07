@@ -51,8 +51,8 @@ public:
     virtual void setY(int y){sizeY=y;}
 
     // Exponential and gamma filter
-    LinearFilter& Exp(double tau);
-    LinearFilter& Gamma(double tau,int n);
+    void Exp(double tau);
+    void Gamma(double tau,int n);
 
     // New input and update of equations
     virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);

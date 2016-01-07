@@ -24,7 +24,7 @@
 #define TWOPI	(2.0*PI)
 #define DBL_EPSILON 1.0e-9
 #define DBL_INF 1.0e9
-#define USE_PYTHON_INTERPRETOR false
+#define USE_PYTHON_INTERPRETER false
 
 namespace constants{
     extern std::string retinaFolder;

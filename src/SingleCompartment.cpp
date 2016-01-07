@@ -21,7 +21,7 @@ SingleCompartment::SingleCompartment(int x, int y, double temporal_step):module(
     exp_term=new CImg<double> (sizeY,sizeX,1,1,0.0);
 }
 
-SingleCompartment::SingleCompartment(const SingleCompartment &copy){
+SingleCompartment::SingleCompartment(const SingleCompartment &copy) : module(copy){
 
     step=copy.step;
     sizeX=copy.sizeX;
@@ -74,37 +74,37 @@ void SingleCompartment::allocateValues(){
 }
 
 
-SingleCompartment& SingleCompartment::set_Cm(double capacitance){
+void SingleCompartment::set_Cm(double capacitance){
     if (capacitance>0)
         Cm = capacitance;
 }
 
-SingleCompartment& SingleCompartment::set_Rm(double resistance){
+void SingleCompartment::set_Rm(double resistance){
     if (resistance>0)
         Rm = resistance;
 }
 
-SingleCompartment& SingleCompartment::set_taum(double temporal_constant){
+void SingleCompartment::set_taum(double temporal_constant){
     if (temporal_constant>0)
         taum = temporal_constant;
 }
 
-SingleCompartment& SingleCompartment::set_El(double Nerst_l){
+void SingleCompartment::set_El(double Nerst_l){
     if (Nerst_l>=0)
         El = Nerst_l;
 }
 
-SingleCompartment& SingleCompartment::set_E(double NernstPotential, int port){
+void SingleCompartment::set_E(double NernstPotential, int port){
     if (port>=0 && number_conductance_ports>0)
         E[port]=NernstPotential;
 }
 
-SingleCompartment& SingleCompartment::set_number_current_ports(int number){
+void SingleCompartment::set_number_current_ports(int number){
     if (number>0)
         number_current_ports = number;
 }
 
-SingleCompartment& SingleCompartment::set_number_conductance_ports(int number){
+void SingleCompartment::set_number_conductance_ports(int number){
     if (number>0)
         number_conductance_ports = number;
 
@@ -118,9 +118,8 @@ SingleCompartment& SingleCompartment::set_number_conductance_ports(int number){
 bool SingleCompartment::setParameters(vector<double> params, vector<string> paramID){
 
     bool correct = true;
-    int port = 0;
 
-    for (int i = 0;i<params.size();i++){
+    for (unsigned int i = 0;i<params.size();i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"number_current_ports")==0){
@@ -137,7 +136,7 @@ bool SingleCompartment::setParameters(vector<double> params, vector<string> para
         }
         else if (strcmp(s,"E")==0){
             set_El(params[i]);
-            for(int j=0;j<E.size();j++)
+            for(unsigned int j=0;j<E.size();j++)
                 set_E(params[i],j);
         }
         else{
@@ -158,15 +157,14 @@ void SingleCompartment::feedInput(const CImg<double>& new_input,bool isCurrent,i
     // Next piece of code adapts port to its correct range.
     int number_of_currents = 0;
     int number_of_conductances = 0;
-    for(int k=0;k<typeSynapse.size();k++){
+    for(unsigned int k=0;k<typeSynapse.size();k++){
 
-        if (k<port){
+        if (k < static_cast<unsigned int>(port)){
             if (typeSynapse[k]==0)
                 number_of_currents+=1;
             else
                 number_of_conductances+=1;
-
-        }else if(k==port){
+        } else if (k == static_cast<unsigned int>(port)) {
             if (isCurrent)
                 port = port - number_of_conductances;
             else

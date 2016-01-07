@@ -77,8 +77,6 @@ public:
 
     // Constructor, copy, destructor.
     Retina(int x=1,int y=1,double temporal_step=1.0);
-    Retina(const Retina& copy);
-    ~Retina(void);
 
     void reset(int x=1,int y=1,double temporal_step=1.0);
 
@@ -98,7 +96,7 @@ public:
     int getSimTime();
 
     // set and get pixelsPerDegree
-    Retina& setPixelsPerDegree(double ppd);
+    void setPixelsPerDegree(double ppd);
     double getPixelsPerDegree();
     // feedInput accepting a custom image
     CImg<double> *feedInput(CImg<double>* img);

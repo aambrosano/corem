@@ -72,8 +72,6 @@ protected:
 public:
     // Constructor, copy, destructor.
     DisplayManager(int x=1,int y=1);
-    DisplayManager(const DisplayManager& copy);
-    ~DisplayManager(void);
 
     void reset();
 

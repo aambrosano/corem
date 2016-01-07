@@ -23,14 +23,6 @@ ShortTermPlasticity::ShortTermPlasticity(int x,int y,double temporal_step,double
     }
 }
 
-ShortTermPlasticity::ShortTermPlasticity(const ShortTermPlasticity& copy){
-
-}
-
-ShortTermPlasticity::~ShortTermPlasticity(void){
-
-}
-
 //------------------------------------------------------------------------------//
 
 
@@ -86,12 +78,12 @@ void ShortTermPlasticity::allocateValues(){
 
 }
 
-void ShortTermPlasticity::feedInput(const CImg<double>& new_input, bool isCurrent, int port){
+void ShortTermPlasticity::feedInput(const CImg<double>& new_input, bool, int) {
     // copy input image
     *inputImage[0] = new_input;
 }
 
-void ShortTermPlasticity::update(){
+void ShortTermPlasticity::update() {
 
     // kmInf = (Vinf/(kd*abs(input)))
     // km(t+1) = kmInf + [km(t) - kmInf]*exp(-step/tau)
@@ -112,7 +104,7 @@ void ShortTermPlasticity::update(){
     // abs(input)
     *inputImage[1] = *inputImage[0];
     (inputImage[1])->abs();
-    (*inputImage[1])+= DBL_EPSILON;
+    (*inputImage[1])+= DBL_EPSILON_STP;
 
     // kmInf
     (inputImage[4])->fill(VInf);
@@ -153,11 +145,11 @@ void ShortTermPlasticity::update(){
 
 //------------------------------------------------------------------------------//
 
-bool ShortTermPlasticity::setParameters(vector<double> params, vector<string> paramID){
+bool ShortTermPlasticity::setParameters(vector<double> params, vector<string> paramID) {
 
     bool correct = true;
 
-    for (int i = 0;i<params.size();i++){
+    for (unsigned int i = 0;i<params.size();i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"slope")==0){
@@ -195,6 +187,6 @@ bool ShortTermPlasticity::setParameters(vector<double> params, vector<string> pa
 //------------------------------------------------------------------------------//
 
 
-CImg<double>* ShortTermPlasticity::getOutput(){
+CImg<double>* ShortTermPlasticity::getOutput() {
     return outputImage;
 }

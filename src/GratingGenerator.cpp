@@ -40,14 +40,6 @@ GratingGenerator::GratingGenerator(int ptype, double pstep, double plengthB, dou
     aux = *(new CImg <double>(Y,X,1,3));
 }
 
-GratingGenerator::GratingGenerator(const GratingGenerator& copy){
-
-}
-
-GratingGenerator::~GratingGenerator(void){
-
-}
-
 //------------------------------------------------------------------------------//
 
 CImg <double>* GratingGenerator::compute_grating(double t){
@@ -119,4 +111,3 @@ CImg <double>* GratingGenerator::compute_grating(double t){
 
    return &aux;
 }
-

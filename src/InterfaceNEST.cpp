@@ -1,25 +1,15 @@
 #include "InterfaceNEST.h"
 
-InterfaceNEST::InterfaceNEST(void):retina(1,1,1.0),displayMg(1,1),FileReaderObject(1,1,1.0){
+InterfaceNEST::InterfaceNEST(void) : retina(1,1,1.0), displayMg(1,1) {
     abortExecution = false;
 }
-
-InterfaceNEST::InterfaceNEST(const InterfaceNEST& copy){
-    abortExecution = false;
-
-}
-
-InterfaceNEST::~InterfaceNEST(void){
-
-}
-
 
 //------------------------------------------------------------------------------//
 
 
-void InterfaceNEST::reset(int X, int Y, double tstep,int rep){
+void InterfaceNEST::reset(){
     abortExecution = false;
-    FileReaderObject.reset(1,1,1.0);
+    FileReaderObject.reset();
     retina.reset(1,1,1.0);
     displayMg.reset();
 }

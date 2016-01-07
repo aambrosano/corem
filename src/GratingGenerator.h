@@ -82,8 +82,6 @@ public:
     // Constructor, copy, destructor.
     GratingGenerator();
     GratingGenerator(int ptype,double pstep,double plengthB,double plength,double plength2,int pX,int pY,double pfreq,double pT,double pLum,double pCont,double pphi,double pphi_t,double ptheta,double red, double green, double blue,double pred_phi, double pgreen_phi,double pblue_phi);
-    GratingGenerator(const GratingGenerator& copy);
-    ~GratingGenerator(void);
 
     // update the grating
     CImg<double> *compute_grating(double t);

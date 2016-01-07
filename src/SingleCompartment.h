@@ -48,14 +48,14 @@ public:
     virtual void setX(int x){sizeX=x;}
     virtual void setY(int y){sizeY=y;}
 
-    SingleCompartment& set_Cm(double capacitance);
-    SingleCompartment& set_Rm(double resistance);
-    SingleCompartment& set_taum(double temporal_constant);
-    SingleCompartment& set_El(double Nerst_l);
+    void set_Cm(double capacitance);
+    void set_Rm(double resistance);
+    void set_taum(double temporal_constant);
+    void set_El(double Nerst_l);
 
-    SingleCompartment& set_E(double NernstPotential, int port);
-    SingleCompartment& set_number_current_ports(int number);
-    SingleCompartment& set_number_conductance_ports(int number);
+    void set_E(double NernstPotential, int port);
+    void set_number_current_ports(int number);
+    void set_number_conductance_ports(int number);
 
     // New input and update of equations
     virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);

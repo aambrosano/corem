@@ -33,8 +33,6 @@ public:
     // Constructor, copy, destructor.
     impulse();
     impulse(double startParam, double stopParam, double amplitudeParam, double offsetParam,int X, int Y);
-    impulse(const impulse& copy);
-    ~impulse(void);
 
     // update
     CImg<double>* update(double t);

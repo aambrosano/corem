@@ -26,8 +26,8 @@ namespace py = boost::python;
 // create a dummy image with a moving red pixel
 CImg<double>* custom_img(int currTime) {
     CImg<double>* retval = new CImg<double>(25, 25, 1, 3);
-    for (unsigned int i = 0; i < retval->width(); i++) {
-        for (unsigned int j = 0; j < retval->height(); j++) {
+    for (int i = 0; i < retval->width(); i++) {
+        for (int j = 0; j < retval->height(); j++) {
             (*retval)(i, j, 0, 0) = (*retval)(i, j, 0, 1) = (*retval)(i, j, 0, 2) = 255;
         }
     }
@@ -41,7 +41,7 @@ CImg<double>* custom_img(int currTime) {
 // main
 int main(int argc, char *argv[])
 {
-    #ifdef USE_PYTHON_INTERPRETOR
+    #ifdef USE_PYTHON_INTERPRETER
     Py_Initialize();
     #endif
     // string currentDirRoot = constants::getPath();
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
             for(int k = 0; k < simTime; k += simStep){
                 // interface.update();
                 CImg<double> *a = custom_img(k);
-                CImg<double> *input = interface.retina.feedInput(a);
+                CImg<double> *input = interface.retina.feedInput(a); input = input;
                 interface.retina.update();
                 interface.displayMg.updateDisplay(a,
                     interface.retina,
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 
     }
 
-    #ifdef USE_PYTHON_INTERPRETOR
+    #ifdef USE_PYTHON_INTERPRETER
     Py_Finalize();
     #endif
 

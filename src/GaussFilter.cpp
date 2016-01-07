@@ -6,10 +6,6 @@ GaussFilter::GaussFilter(int x, int y, double ppd):module(x,y,1.0){
     pixelsPerDegree = ppd;
 }
 
-GaussFilter::GaussFilter(const GaussFilter &copy){
-    (*this)=copy;
-}
-
 GaussFilter::~GaussFilter(){
     delete buffer;
 }
@@ -62,7 +58,7 @@ void GaussFilter::allocateValues(){
 
 
         double new_sigma = 0.0;
-        double r,rmax;
+        double r;
 
         // initialize matrices
         q_m = CImg <double>(sizeY,sizeX,1,1,0.0);
@@ -77,7 +73,7 @@ void GaussFilter::allocateValues(){
             for(int j=0;j<sizeX;j++){
 
                 // update sigma value
-                r = sqrt((double(i)-floor(sizeY/2))*(double(i)-floor(sizeY/2)) + (double(j)-floor(sizeX/2))*(double(j)-floor(sizeX/2)));          
+                r = sqrt((double(i)-floor(sizeY/2))*(double(i)-floor(sizeY/2)) + (double(j)-floor(sizeX/2))*(double(j)-floor(sizeX/2)));
                 new_sigma = sigma / density(r/pixelsPerDegree);
 
                 // coefficient calculation
@@ -120,7 +116,7 @@ void GaussFilter::allocateValues(){
 
 //------------------------------------------------------------------------------//
 
-GaussFilter& GaussFilter::setSigma(double sigm){
+void GaussFilter::setSigma(double sigm){
     if (sigm>= 0){
         sigma = sigm;
     }
@@ -276,7 +272,7 @@ void GaussFilter::spaceVariantGaussFiltering(CImg<double> &src){
 
 //------------------------------------------------------------------------------//
 
-void GaussFilter::feedInput(const CImg<double> &new_input, bool isCurrent, int port){
+void GaussFilter::feedInput(const CImg<double> &new_input, bool, int){
       // copy input image
     *inputImage=new_input;
 }
@@ -314,7 +310,7 @@ bool GaussFilter::setParameters(vector<double> params, vector<string> paramID){
 
     bool correct = true;
 
-    for (int i = 0;i<params.size();i++){
+    for (unsigned int i = 0;i<params.size();i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"sigma")==0){

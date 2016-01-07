@@ -13,7 +13,7 @@ LinearFilter::LinearFilter(int x, int y, double temporal_step,double initial_val
 
 }
 
-LinearFilter::LinearFilter(const LinearFilter &copy){
+LinearFilter::LinearFilter(const LinearFilter &copy) : module(copy) {
 
     M=copy.M;
     N=copy.N;
@@ -63,7 +63,7 @@ void LinearFilter::allocateValues(){
 
 //------------------------------------------------------------------------------//
 
-LinearFilter& LinearFilter::Exp(double tau){
+void LinearFilter::Exp(double tau){
 
     if(tau>0)
     {
@@ -77,7 +77,7 @@ LinearFilter& LinearFilter::Exp(double tau){
 
 }
 
-LinearFilter& LinearFilter::Gamma(double tau,int n){
+void LinearFilter::Gamma(double tau,int n){
 
     if(tau>0 && n>=0)
     {
@@ -103,7 +103,7 @@ bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
     int n = 0;
     int type = 0;
 
-    for (int i = 0;i<params.size();i++){
+    for (unsigned int i = 0;i<params.size();i++){
         const char * s = paramID[i].c_str();
 
         if (strcmp(s,"tau")==0){
@@ -143,7 +143,7 @@ bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
 //------------------------------------------------------------------------------//
 
 
-void LinearFilter::feedInput(const CImg<double>& new_input, bool isCurrent, int port){
+void LinearFilter::feedInput(const CImg<double>& new_input, bool /* isCurrent */, int /* port */){
 
     *(last_inputs[0])=new_input;
 

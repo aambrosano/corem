@@ -1,10 +1,10 @@
 #include "constants.h"
 
 namespace constants{
-    extern std::string retinaFolder = "COREM";
-    extern std::string retinaScript = "Retina_scripts/example_1.py";
-    extern const char* resultID = "contrast";
-    extern const double outputfactor = 50.0; // to scale LN analysis
+    std::string retinaFolder = "COREM";
+    std::string retinaScript = "Retina_scripts/example_1.py";
+    const char* resultID = "contrast";
+    const double outputfactor = 50.0; // to scale LN analysis
 
     // root path
     std::string getPath(){

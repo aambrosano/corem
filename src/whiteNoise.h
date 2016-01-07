@@ -39,11 +39,9 @@ private:
     CImg <double> *output;
 
 public:
-    // Constructor, copy, destructor.
+    // Constructor
     whiteNoise();
     whiteNoise(double mean, double contrast1, double contrast2, double period, double switchT,int X, int Y);
-    whiteNoise(const whiteNoise& copy);
-    ~whiteNoise(void);
 
     // update
     CImg<double>* update(double t);

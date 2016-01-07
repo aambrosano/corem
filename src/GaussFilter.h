@@ -52,16 +52,15 @@ protected:
 
 public:
 
-    // Constructor, copy, destructor.
+    // Constructor, destructor.
     GaussFilter(int x=1,int y=1, double ppd=1.0);
-    GaussFilter(const GaussFilter& copy);
     ~GaussFilter(void);
 
     // Allocate values and set protected parameters
     virtual void allocateValues();
     virtual void setX(int x){sizeX=x;}
     virtual void setY(int y){sizeY=y;}
-    GaussFilter& setSigma(double sigm);
+    void setSigma(double sigm);
 
     // Fast filtering with constant sigma
     void gaussHorizontal(CImg<double> &src);

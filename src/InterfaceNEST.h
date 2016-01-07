@@ -51,13 +51,11 @@ public:
 public:
     // Constructor, copy, destructor.
     InterfaceNEST(void);
-    InterfaceNEST(const InterfaceNEST& copy);
-    ~InterfaceNEST(void);
 
     double getTotalNumberTrials();
     int getSimTime();
 
-    void reset(int X, int Y, double tstep,int rep);
+    void reset();
     void allocateValues(const char * retinaPath, const char * outputFile, double outputfactor, double currentRep);
     void update();
     double getValue(double cell);

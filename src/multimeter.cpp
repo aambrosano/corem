@@ -6,15 +6,6 @@ multimeter::multimeter(int x, int y){
     simStep=1.0;
 }
 
-
-multimeter::multimeter(const multimeter& copy){
-
-}
-
-multimeter::~multimeter(){
-
-}
-
 void multimeter::setSimStep(double value){
     simStep = value;
 }
@@ -112,7 +103,7 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
     double max_value = DBL_EPSILON;
     double min_value = DBL_INF;
 
-    for(int k=0;k<temporal.size();k++){
+    for(unsigned int k=0;k<temporal.size();k++){
         (*temporalProfilet)(k,0,0,0)=temporal[k];
         temp[k] = temporal[k];
 
@@ -166,18 +157,18 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segment, double start, double stop, double numberTrials, const char * LNFile, double ampl){
+void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segment, double /* start */, double /* stop */, double numberTrials, const char * LNFile, double ampl){
 
     // normalize input
     double mean_value1 = 0;
 
-    for(int k=0;k<input.size();k++){
+    for(unsigned int k=0;k<input.size();k++){
         mean_value1+= input[k];
     }
 
     mean_value1 /= input.size();
 
-    for(int k=0;k<input.size();k++){
+    for(unsigned int k=0;k<input.size();k++){
         input[k] = (input[k] - mean_value1);
     }
 
@@ -199,7 +190,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
     }
 
-    fin.close(); 
+    fin.close();
 
     // Non-linearity: The stimulus is convolved with the filter.
     // g = S*F
@@ -359,9 +350,9 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
     saveArray(auxF,int(segment),LNFile);
 
     // discard the beginning of the sequence to plot g
-    int begin = start;
-    if(length > 300)
-        begin = start+200;
+    // int begin = start;
+    // if(length > 300)
+    //     begin = start+200;
 
     // Plot of the response vs g
 
@@ -507,7 +498,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showLNAnalysis(string title, int col, int row, double waitTime, double segment, double interval, double start, double stop,double numberTrials,const char * LNFile){
+void multimeter::showLNAnalysis(string /* title */, int /* col */, int /* row */, double waitTime, double segment, double interval, double start, double stop,double numberTrials,const char * LNFile){
 
 
     // normalize vectors
@@ -519,7 +510,7 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
     double mean_value1 = 0;
     double mean_value2 = 0;
 
-    for(int k=0;k<input.size();k++){
+    for(unsigned int k=0;k<input.size();k++){
         mean_value1+= input[k];
         mean_value2+= temporal[k];
     }
@@ -527,7 +518,7 @@ void multimeter::showLNAnalysis(string title, int col, int row, double waitTime,
     mean_value1 /= input.size();
     mean_value2 /= temporal.size();
 
-    for(int k=0;k<input.size();k++){
+    for(unsigned int k=0;k<input.size();k++){
         if(k>temporal.size()/100){
             newInput.push_back(input[k] - mean_value1);
     //        input[k] = (input[k] - mean_value1);
@@ -818,7 +809,7 @@ const char* multimeter::readFile(const char * File){
 
     string stringResult = getDir()+ "results/";
     const char * root = (stringResult).c_str();
-    char result[1000];
+    char* result = new char[1000];
 
     strcpy(result,root);
     strcat(result,File);
@@ -896,7 +887,7 @@ void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSiz
 
         // save new array
         double *F = (double *) malloc((newSeq.size()) * sizeof(double));
-        for(int k=0;k<newSeq.size();k++)
+        for(unsigned int k=0;k<newSeq.size();k++)
             F[k]=newSeq[k];
         saveArray(F, newSeq.size(), (const char *)seqFile);
 
@@ -909,7 +900,7 @@ void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSiz
 
             // save new array
             double *F = (double *) malloc((FileSeq.size() + newSeq.size() ) * sizeof(double));
-            for(int k=0;k<FileSeq.size() + newSeq.size();k++){
+            for(unsigned int k=0;k<FileSeq.size() + newSeq.size();k++){
                 if(k<FileSeq.size()){
                     F[k] = FileSeq[k];
                 }else{
@@ -955,7 +946,7 @@ void multimeter::saveArray(double* array, int arraySize, string fileID){
 
       bool fileFound = false;
 
-      for(int k=0;k<files.size();k++){
+      for(unsigned int k=0;k<files.size();k++){
 
           const char * f1 = (files[k]).c_str();
           const char * f2 = fileID.c_str();
@@ -1019,4 +1010,3 @@ void multimeter::saveArray(double* array, int arraySize, string fileID){
 
       }
 }
-

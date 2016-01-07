@@ -18,14 +18,6 @@ whiteNoise::whiteNoise(double mean, double contrast1, double contrast2, double p
 
 }
 
-whiteNoise::whiteNoise(const whiteNoise& copy){
-
-}
-
-whiteNoise::~whiteNoise(void){
-
-}
-
 //------------------------------------------------------------------------------//
 
 void whiteNoise::initializeDist(unsigned seed){

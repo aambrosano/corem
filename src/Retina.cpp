@@ -31,15 +31,7 @@ Retina::Retina(int x, int y, double temporal_step){
 
 }
 
-Retina::Retina(const Retina& copy){
-
-}
-
-Retina::~Retina(void){
-
-}
-
-void Retina::reset(int x,int y,double temporal_step){
+void Retina::reset(int x, int y, double temporal_step) {
     step = temporal_step;
     sizeX=x;
     sizeY=y;
@@ -88,7 +80,7 @@ void Retina::set_step(double temporal_step) {
     }
 }
 
-Retina& Retina::setPixelsPerDegree(double ppd){
+void Retina::setPixelsPerDegree(double ppd) {
     pixelsPerDegree = ppd;
 }
 
@@ -108,41 +100,40 @@ double Retina::getStep(){
     return step;
 }
 
-void Retina::setSimTotalRep(double r){
+void Retina::setSimTotalRep(double r) {
     totalNumberTrials = r;
 }
 
-void Retina::setSimCurrentRep(double r){
+void Retina::setSimCurrentRep(double r) {
     CurrentTrial = r;
 }
 
-void Retina::setSimTime(int t){
+void Retina::setSimTime(int t) {
     SimTime = t;
 }
 
-double Retina::getSimCurrentRep(){
+double Retina::getSimCurrentRep() {
     return CurrentTrial;
 }
 
-double Retina::getSimTotalRep(){
+double Retina::getSimTotalRep() {
     return totalNumberTrials;
 }
 
-int Retina::getSimTime(){
+int Retina::getSimTime() {
     return SimTime;
 }
 
 //------------------------------------------------------------------------------//
 
-void Retina::setRepetitions(int r){
+void Retina::setRepetitions(int r) {
     repetitions = r;
 }
 
 //------------------------------------------------------------------------------//
 
 
-void Retina::allocateValues(){
-
+void Retina::allocateValues() {
     if(verbose)cout << "Allocating "<< (getNumberModules()-1) << " retinal modules." << endl;
     if(verbose)cout << "sizeX = "<< sizeX << endl;
     if(verbose)cout << "sizeY = "<< sizeY << endl;
@@ -161,7 +152,7 @@ void Retina::allocateValues(){
     Y_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
     Z_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
 
-    for (int i=1;i<modules.size();i++){
+    for (unsigned int i = 1; i < modules.size(); i++) {
         module* m = modules[i];
         m->allocateValues();
     }
@@ -169,7 +160,7 @@ void Retina::allocateValues(){
 
 
 CImg<double> *Retina::feedInput(CImg<double>* input) {
-    if (input->size()==sizeX*sizeY){
+    if ((unsigned int)(input->size())==static_cast<unsigned int>(sizeX*sizeY)){
         // Separate color channels
         cimg_forXY(*input,x,y) {
             RGBred(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
@@ -197,7 +188,7 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
 
     rods = (ch1+ch2+ch3)/3;
 
-    for (int i=1;i<modules.size();i++){
+    for (unsigned int i = 1; i < modules.size(); i++) {
 
         module* neuron = modules[i];
         int number_of_ports = neuron->getSizeID();
@@ -224,7 +215,7 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
             // other inputs rather than cones or rods
 
                 //search for the first image
-                for (int m=1;m<modules.size();m++){
+                for (unsigned int m = 1; m < modules.size(); m++) {
                     module* n = modules[m];
                     const char * cellName1 = l[0].c_str();
                     const char * cellName2 = (n->getModuleID()).c_str();
@@ -236,9 +227,8 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
 
 
                 //other operations
-                for (int k=1;k<l.size();k++){
-
-                    for (int m=1;m<modules.size();m++){
+                for (unsigned int k = 1; k < l.size(); k++) {
+                    for (unsigned int m = 1; m < modules.size(); m++) {
                         module* n = modules[m];
                         const char * cellName1 = l[k].c_str();
                         const char * cellName2 = (n->getModuleID()).c_str();
@@ -307,6 +297,7 @@ CImg<double> *Retina::feedInput(int step){
         break;
 
     default:
+        input = nullptr;
         cout << "Wrong input type!" << endl;
         break;
     }
@@ -319,7 +310,7 @@ CImg<double> *Retina::feedInput(int step){
 //------------------------------------------------------------------------------//
 
 void Retina::update(){
-    for (int i=1;i<modules.size();i++){
+    for (unsigned int i = 1; i < modules.size(); i++) {
         module* m = modules[i];
         m->update();
     }
@@ -428,14 +419,14 @@ bool Retina::connect(vector <string> from, const char *to,vector <int> operation
 
                 if(verbose)cout << from[0] << " has been added to the output buffer." << endl;
 
-            }else{
-                for (int i=1;i<modules.size();i++){
+            } else {
+                for (unsigned int i = 1; i < modules.size(); i++){
                     neuronto = modules[i];
-                    if (neuronto->checkID(to)){
+                    if (neuronto->checkID(to)) {
 
                         // check from
-                        for (int j=0;j< from.size();j++){
-                            int k;
+                        for (unsigned int j = 0; j < from.size(); j++) {
+                            unsigned int k;
                             const char * ff = from[j].c_str();
                             if (strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0){
                                 for (k=1;k<modules.size();k++){

@@ -46,8 +46,6 @@ protected:
 public:
     // Constructor, copy, destructor.
     StaticNonLinearity(int x=1, int y=1, double temporal_step=1.0, int t=0);
-    StaticNonLinearity(const StaticNonLinearity& copy);
-    ~StaticNonLinearity(void);
 
     // Set functions
     void setSlope(double s=1.0, int segment=0);

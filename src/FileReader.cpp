@@ -1,23 +1,15 @@
 #include "FileReader.h"
 
-FileReader::FileReader(int X, int Y, double tstep){
+FileReader::FileReader() {
     CorrectFile = true;
     continueReading = true;
     fileName = "";
 }
 
-void FileReader::reset(int X, int Y, double tstep){
+void FileReader::reset() {
     CorrectFile = true;
     continueReading = true;
     fileName = "";
-}
-
-FileReader::FileReader(const FileReader& copy){
-
-}
-
-FileReader::~FileReader(void){
-
 }
 
 //-------------------------------------------------//
@@ -53,7 +45,7 @@ void FileReader::allocateValues(){
 //-------------------------------------------------//
 
 void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
-    #ifdef USE_PYTHON_INTERPRETOR
+    #ifdef USE_PYTHON_INTERPRETER
     // interpreting the retina scripts as real python files instead of parsing them
     ifstream in(fileName.c_str());
     string contents((istreambuf_iterator<char>(in)),

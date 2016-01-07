@@ -1,7 +1,7 @@
 #include "fixationalMovGrating.h"
 
 fixationalMovGrating::fixationalMovGrating(int X,int Y,double radius,double jitter,double period,double step,double luminance,double contrast,double orientation,double red_weight,double green_weigh, double blue_weight,int t1,int t2,int ts)
-{  
+{
     unsigned seed1,seed2,seed3,seed4;
     seed1 = std::chrono::system_clock::now().time_since_epoch().count();
     seed3 = std::chrono::system_clock::now().time_since_epoch().count();
@@ -66,15 +66,7 @@ fixationalMovGrating::fixationalMovGrating(int X,int Y,double radius,double jitt
     jitter1 = 0.0;
     jitter2 = 0.0;
     j1 = -step_size;
-    value1,value2,value3 = 0.0;
-
-}
-
-fixationalMovGrating::fixationalMovGrating(const fixationalMovGrating& copy){
-
-}
-
-fixationalMovGrating::~fixationalMovGrating(void){
+    value1 = value2 = value3 = 0.0;
 
 }
 

@@ -15,14 +15,6 @@ DisplayManager::DisplayManager(int x, int y){
 
 }
 
-DisplayManager::DisplayManager(const DisplayManager& copy){
-
-}
-
-DisplayManager::~DisplayManager(void){
-
-}
-
 void DisplayManager::setLNFile(const char *file, double ampl){
     LNFile = file;
     LNfactor = ampl;
@@ -173,7 +165,7 @@ void DisplayManager::modifyLN(string moduleID, double start, double stop){
     int pos = 0;
     const char * str1 = moduleID.c_str();
 
-    for(int k=0;k<multimeterIDs.size();k++){
+    for (unsigned int k=0;k<multimeterIDs.size();k++){
         const char * str2 = (multimeterIDs[k]).c_str();
         if(strcmp(str1,str2)==0){
             pos = k;
@@ -358,9 +350,9 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
 
 
     // update multimeters
-    for(int i=0;i<multimeters.size();i++){
+    for (unsigned int i = 0; i < multimeters.size(); i++){
         multimeter *m = multimeters[i];
-        module *n;
+        module *n = nullptr;
         const char * moduleID = (moduleIDs[i]).c_str();
 
         // find target module
@@ -426,10 +418,10 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
 
 
     // display temporal and LN multimeters for the last simulation step
-    if(step==totalSimTime-simStep){
+    if (step == totalSimTime - simStep) {
 
         int LNMultimeters = 0;
-        for(int i=0;i<multimeters.size();i++){
+        for (unsigned int i = 0; i < multimeters.size(); i++) {
             multimeter *m = multimeters[i];
 
             // set position

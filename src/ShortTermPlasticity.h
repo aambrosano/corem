@@ -17,7 +17,7 @@
 
 #include "module.h"
 
-#define DBL_EPSILON 1.0e-2
+#define DBL_EPSILON_STP 1.0e-2
 
 using namespace cimg_library;
 using namespace std;
@@ -39,8 +39,6 @@ protected:
 public:
     // Constructor, copy, destructor.
     ShortTermPlasticity(int x=1,int y=1,double temporal_step=1.0,double Am=1.0,double Vm=0.0,double Em=1.0, double th = 0.0, bool isTh=false);
-    ShortTermPlasticity(const ShortTermPlasticity& copy);
-    ~ShortTermPlasticity(void);
 
     // Set functions
     void setSlope(double s);
