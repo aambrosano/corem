@@ -67,7 +67,6 @@ fixationalMovGrating::fixationalMovGrating(int X,int Y,double radius,double jitt
     jitter2 = 0.0;
     j1 = -step_size;
     value1 = value2 = value3 = 0.0;
-
 }
 
 //------------------------------------------------------------------------------//

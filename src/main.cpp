@@ -1,3 +1,4 @@
+
 /* BeginDocumentation
  * Name: main
  *
@@ -23,7 +24,6 @@ using namespace std;
 namespace fs = boost::filesystem;
 namespace py = boost::python;
 
-// create a dummy image with a moving red pixel
 CImg<double>* custom_img(int currTime) {
     CImg<double>* retval = new CImg<double>(25, 25, 1, 3);
     for (int i = 0; i < retval->width(); i++) {
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
     cout << "Simulation step: " << simStep << endl;
 
     // Simulation
-    for (unsigned int i = 0; i < trials; i++){
+    for (uint i = 0; i < trials; i++){
 
         // Create new retina interface for every trial (reset values)
         InterfaceNEST interface;

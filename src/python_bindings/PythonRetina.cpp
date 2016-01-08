@@ -146,6 +146,11 @@ void PythonRetina::Input(std::string input_type, py::dict args) {
         );
         retina_->setRepetitions(1.0);
     }
+    else if (input_type == "camera") {
+        py::tuple size = py::extract<py::tuple>(args["size"]);
+        retina_->setSizeX(py::extract<int>(size[1]));
+        retina_->setSizeY(py::extract<int>(size[0]));
+    }
     else {
         std::cout << "Error: invalid input type" << std::endl;
     }
@@ -310,7 +315,7 @@ void PythonRetina::Multimeter(std::string multimeter_type, std::string multimete
     }
 }
 
-BOOST_PYTHON_MODULE(retina)
+BOOST_PYTHON_MODULE(pyretina)
 {
     py::class_<PythonRetina>("Retina", py::init<Retina&, DisplayManager&>())
         .def("TempStep", &PythonRetina::TempStep)
@@ -326,4 +331,6 @@ BOOST_PYTHON_MODULE(retina)
         .def("Connect", &PythonRetina::Connect)
         .def("Show", &PythonRetina::Show)
         .def("Multimeter", &PythonRetina::Multimeter);
+    py::class_<InterfaceNESTWrapper>("InterfaceNEST", py::init<std::string>())
+        .def("update", &InterfaceNESTWrapper::update);
 }

@@ -75,6 +75,7 @@ protected:
 public:
     double step;
 
+
     // Constructor, copy, destructor.
     Retina(int x=1,int y=1,double temporal_step=1.0);
 

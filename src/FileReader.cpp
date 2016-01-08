@@ -42,24 +42,24 @@ void FileReader::parseFile(Retina& retina, DisplayManager &displayMg){
         istreambuf_iterator<char>());
     try {
         auto py__main__ = py::import("__main__");
-        auto pyretina = py::import("retina");
+        auto pyretina = py::import("pyretina");
         PythonRetina* pr = new PythonRetina(retina, displayMg);
         py__main__.attr("retina") = py::ptr(pr);
         PyRun_SimpleString(contents.c_str());
     } catch(py::error_already_set const &) {
         PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
         PyErr_Fetch(&type_ptr, &value_ptr, &traceback_ptr);
-        std::string err("Unfetchable Python error");
+        std::string ret("Unfetchable Python error");
         if(type_ptr != NULL){
             py::handle<> h_type(type_ptr);
             py::str type_pstr(h_type);
             py::extract<std::string> e_type_pstr(type_pstr);
             if(e_type_pstr.check())
-                err = e_type_pstr();
+                ret = e_type_pstr();
             else
-                err = "Unknown exception type";
+                ret = "Unknown exception type";
         }
-        std::cout << "Error in Python: " << err << std::endl;
+        std::cout << "Error in Python: " << ret << std::endl;
 
         std::string exception_msg = py::extract<std::string>(value_ptr);
         std::cout << exception_msg << std::endl;

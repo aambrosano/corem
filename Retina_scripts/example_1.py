@@ -27,7 +27,8 @@ retina.DisplayWindows(3) # Displays per row
 ### Visual input ###
 
 # Folder that contains the input sequence
-retina.Input('sequence', {'path': '../input_sequences/Weberlaw/0_255/'})
+# retina.Input('sequence', {'path': '../input_sequences/Weberlaw/0_255/'})
+retina.Input('camera', {'size': (320, 240)})
 
 ### Creation of computational retinal microcircuits ###
 
@@ -142,6 +143,7 @@ retina.Show('SNL_ganglion', True, {'margin': 0})
 
 # Spatial multimeters of row/col 12th at 200 ms
 # row selection
+"""
 retina.Multimeter('spatial', 'Horizontal cells', 'SNL_horizontal', {
     'timeStep': 200,
     'rowcol': True,
@@ -156,3 +158,4 @@ retina.Multimeter('spatial', 'Horizontal cells', 'SNL_horizontal', {
 
 # Temporal multimeter of ganglion cell at (5,5)
 retina.Multimeter('temporal', 'Ganglion cell', 'SNL_ganglion', {'x': 5, 'y': 5}, True)
+"""

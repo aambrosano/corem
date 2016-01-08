@@ -159,15 +159,50 @@ void Retina::allocateValues() {
 }
 
 
+CImg<double> *rgb2xyz(CImg<double>* input) {
+    CImg<double> *res = new CImg<double>(input->width(), input->height(), 1, 3, 0.0);
+    cimg_forXY(*input, x, y) {
+        (*res)(x, y, 0, 0) = 0.4124564*(*input)(x, y, 0, 0) + 0.3575761*(*input)(x, y, 0, 1) + 0.1804375*(*input)(x, y, 0, 2),
+        (*res)(x, y, 0, 1) = 0.2126729*(*input)(x, y, 0, 0) + 0.7151522*(*input)(x, y, 0, 1) + 0.0721750*(*input)(x, y, 0, 2),
+        (*res)(x, y, 0, 2) = 0.0193339*(*input)(x, y, 0, 0) + 0.1191920*(*input)(x, y, 0, 1) + 0.9503041*(*input)(x, y, 0, 2);
+    }
+    return res;
+}
+
+CImg<double> *xyz2lms(CImg<double>* input) {
+    CImg<double> *res = new CImg<double>(input->width(), input->height(), 1, 3, 0.0);
+    cimg_forXY(*input, x, y) {
+        (*res)(x, y, 0, 0) = 0.38971*(*input)(x, y, 0, 0) + 0.68898*(*input)(x, y, 0, 1) - 0.07868*(*input)(x, y, 0, 2),
+        (*res)(x, y, 0, 1) = -0.22981*(*input)(x, y, 0, 0) + 1.1834*(*input)(x, y, 0, 1) + 0.04641*(*input)(x, y, 0, 2),
+        (*res)(x, y, 0, 2) = (*input)(x, y, 0, 2);
+    }
+    return res;
+}
+
+CImg<double> *greyscale2rgb(CImg<double>* input) {
+    CImg<double> *res = new CImg<double>(input->width(), input->height(), 1, 3, 0.0);
+    cimg_forXY(*input, x, y) {
+        (*res)(x, y, 0, 0) = (*input)(x, y, 0, 0),
+        (*res)(x, y, 0, 1) = (*input)(x, y, 0, 0),
+        (*res)(x, y, 0, 2) = (*input)(x, y, 0, 0);
+    }
+    return res;
+}
+
 CImg<double> *Retina::feedInput(CImg<double>* input) {
-    if ((unsigned int)(input->size())==static_cast<unsigned int>(sizeX*sizeY)){
+    if ((unsigned int)(input->size())==static_cast<unsigned int>(sizeX*sizeY))
+        input = greyscale2rgb(input);
+
+    // To be kept until greyscale2rgb, xyz2lms and rgb2xyz are fully debugged
+    /*
+    if ((uint)(input->size())==static_cast<uint>(sizeX*sizeY)) {
         // Separate color channels
         cimg_forXY(*input,x,y) {
             RGBred(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
             RGBgreen(x,y,0,0) = (*input)(x,y,0,0),    // Green component of image sent to imgG
             RGBblue(x,y,0,0) = (*input)(x,y,0,0);    // Blue component of image sent to imgB
         }
-    }else{
+    } else {
        // Separate color channels
        cimg_forXY(*input,x,y) {
            RGBred(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
@@ -175,6 +210,7 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
            RGBblue(x,y,0,0) = (*input)(x,y,0,2);    // Blue component of image sent to imgB
        }
     }
+
     // Hunt-Pointer-Estévez (HPE) transform
     // sRGB --> XYZ
     X_mat = 0.4124564*RGBblue + 0.3575761*RGBgreen + 0.1804375*RGBred;
@@ -186,7 +222,9 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
     ch2 = -0.22981*X_mat + 1.1834*Y_mat + 0.04641*Z_mat;
     ch3 = Z_mat;
 
-    rods = (ch1+ch2+ch3)/3;
+    rods = (ch1+ch2+ch3)/3;*/
+
+    CImg<double> rods = *(xyz2lms(rgb2xyz(input)));
 
     for (unsigned int i = 1; i < modules.size(); i++) {
 
@@ -203,13 +241,13 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
             const char * cellName = l[0].c_str();
 
             if(strcmp(cellName,"L_cones")==0){
-                    accumulator=ch3;
+                    accumulator=rods.get_channel(2);//ch3;
             }else if(strcmp(cellName,"M_cones")==0){
-                    accumulator=ch2;
+                    accumulator=rods.get_channel(1);//ch2;
             }else if(strcmp(cellName,"S_cones")==0){
-                    accumulator=ch1;
+                    accumulator=rods.get_channel(0);//ch1;
             }else if(strcmp(cellName,"rods")==0){
-                    accumulator=rods;
+                    accumulator=rods/3;
             }else{
 
             // other inputs rather than cones or rods
@@ -252,7 +290,6 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
                 neuron->feedInput(accumulator,false,o);
         }
     }
-
     return input;
 }
 

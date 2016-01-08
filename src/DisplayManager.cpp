@@ -267,6 +267,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     const unsigned char color[] = {255,255,255};
 
 
+
     // Display input
     if(isShown[0]){
         CImgDisplay *d0 = displays[0];
@@ -280,7 +281,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
         inputImage->display(*d0);
 
         // This was not
-        /*inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,0,false);
+        /* inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,0,false);
         (((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX)).display(*d0);*/
     }
 
