@@ -4,24 +4,22 @@
 #
 #-------------------------------------------------
 
-QT       += core
+include(../retina.pri)
+QT       -= core
 
-QT       -= gui
 
-QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS +=  -fopenmp
+######################################### Config
+QMAKE_CXXFLAGS+= -fopenmp -fPIC
+QMAKE_LFLAGS +=  -fopenmp -shared
+LIBS +=  -lX11 -lpthread -lboost_python -lboost_filesystem -lboost_system
+DESTDIR = ../lib
+TARGET = libretina.so
 
-TARGET = COREM
-CONFIG   += console
-CONFIG   -= app_bundle
+CONFIG -= app_bundle
 
 TEMPLATE = app
 
-LIBS += -lX11 -lpthread
-QMAKE_CXXFLAGS += -std=c++0x
-
-SOURCES += main.cpp \
-    GaussFilter.cpp \
+SOURCES = GaussFilter.cpp \
     multimeter.cpp \
     LinearFilter.cpp \
     SingleCompartment.cpp \
@@ -38,7 +36,7 @@ SOURCES += main.cpp \
     fixationalMovGrating.cpp \
     constants.cpp
 
-HEADERS += \
+HEADERS = \
     GaussFilter.h \
     multimeter.h \
     LinearFilter.h \
@@ -55,4 +53,3 @@ HEADERS += \
     ShortTermPlasticity.h \
     fixationalMovGrating.h \
     constants.h
-

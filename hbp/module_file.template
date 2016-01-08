@@ -1,0 +1,38 @@
+#%Module1.0
+######################################################################
+#
+# Module:      $BUILD_PACKAGE_NAME
+#
+# Sourced:
+#   meta/bbp/sw
+# Prereq:
+#   none
+#
+
+# Set internal variables
+set             sw_basedir      "$NEUROROBOTICS_MODULE_PATH"
+set             package_name    "$BUILD_PACKAGE_NAME"
+set             version         "$BUILD_VERSION"
+set             platform        "rhel6"
+set             compiler        "$BUILD_COMPILER"
+set             architecture    "x86_64"
+
+set             root            "$sw_basedir/$package_name/$version/$platform/$compiler/$architecture"
+module-whatis   "loads the environment for $package_name"
+
+
+proc ModulesHelp { } {
+    global package_name version platform
+
+    puts stderr "
+This module prepares your environment to run $package_name $version
+
+Type 'module list' to list all the loaded modules
+and 'module avail' to list all the availables ones.
+"
+}
+
+# Update PATH environment:
+prepend-path   PATH                 $root/bin
+prepend-path   LD_LIBRARY_PATH      $root/lib
+prepend-path   PYTHON_PATH          $root/lib

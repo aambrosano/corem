@@ -1,4 +1,3 @@
-
 /* BeginDocumentation
  * Name: main
  *
@@ -59,7 +58,7 @@ int main(int argc, char *argv[])
     if (argc == 1) {
         retinaString = currentDirRoot / constants::retinaScript;
     } else {
-        retinaString = currentDirRoot / "Retina_scripts" / (string)argv[1];
+        retinaString = fs::initial_path() / (string)argv[1];
     }
 
     const char * retinaSim = retinaString.c_str();
