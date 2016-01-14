@@ -7,8 +7,9 @@ include(../retina.pri)
 DESTDIR = ../bin
 INCLUDEPATH += ../core/
 
-pathToLibretina = ../lib
-LIBS += -lX11 -L$$pathToLibretina/ -lretina -Wl,-rpath=$$pathToLibretina -lboost_python -lboost_filesystem -lboost_system
+QMAKE_LFLAGS += '-Wl,-rpath,\'\$$ORIGIN/../lib\''
+
+LIBS += -lX11 -L../lib/ -lretina -lboost_python -lboost_filesystem -lboost_system
 
 CONFIG += link_pkgconfig
 PKGCONFIG += python2

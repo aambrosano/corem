@@ -4,7 +4,7 @@ QT       -= core
 DESTDIR = ../../lib
 
 QMAKE_CXXFLAGS += -fPIC
-QMAKE_LFLAGS += -shared
+QMAKE_LFLAGS += -shared '-Wl,-rpath,\'\$$ORIGIN\''
 
 CONFIG -= app_bundle
 TEMPLATE = app
@@ -16,4 +16,4 @@ HEADERS = PythonRetina.h
 
 pathToLibretina = ../../lib
 
-LIBS += -L$$pathToLibretina -lretina -Wl,-rpath=.
+LIBS += -L$$pathToLibretina -lretina

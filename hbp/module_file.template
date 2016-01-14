@@ -35,4 +35,4 @@ and 'module avail' to list all the availables ones.
 # Update PATH environment:
 prepend-path   PATH                 $root/bin
 prepend-path   LD_LIBRARY_PATH      $root/lib
-prepend-path   PYTHON_PATH          $root/lib
+prepend-path   PYTHONPATH           $root/lib
