@@ -332,5 +332,6 @@ BOOST_PYTHON_MODULE(pyretina)
         .def("Show", &PythonRetina::Show)
         .def("Multimeter", &PythonRetina::Multimeter);
     py::class_<InterfaceNESTWrapper>("InterfaceNEST", py::init<std::string>())
-        .def("update", &InterfaceNESTWrapper::update);
+        .def("update", &InterfaceNESTWrapper::update)
+        .def("getValue", &InterfaceNESTWrapper::getValue);
 }

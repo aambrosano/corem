@@ -190,11 +190,11 @@ CImg<double> *greyscale2rgb(CImg<double>* input) {
 }
 
 CImg<double> *Retina::feedInput(CImg<double>* input) {
-    if ((unsigned int)(input->size())==static_cast<unsigned int>(sizeX*sizeY))
-        input = greyscale2rgb(input);
+    /* if ((unsigned int)(input->size())==static_cast<unsigned int>(sizeX*sizeY))
+        input = greyscale2rgb(input); */
 
     // To be kept until greyscale2rgb, xyz2lms and rgb2xyz are fully debugged
-    /*
+
     if ((uint)(input->size())==static_cast<uint>(sizeX*sizeY)) {
         // Separate color channels
         cimg_forXY(*input,x,y) {
@@ -222,9 +222,9 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
     ch2 = -0.22981*X_mat + 1.1834*Y_mat + 0.04641*Z_mat;
     ch3 = Z_mat;
 
-    rods = (ch1+ch2+ch3)/3;*/
+    rods = (ch1+ch2+ch3)/3;
 
-    CImg<double> rods = *(xyz2lms(rgb2xyz(input)));
+    //CImg<double> rods = *(xyz2lms(rgb2xyz(input)));
 
     for (unsigned int i = 1; i < modules.size(); i++) {
 
@@ -241,13 +241,17 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
             const char * cellName = l[0].c_str();
 
             if(strcmp(cellName,"L_cones")==0){
-                    accumulator=rods.get_channel(2);//ch3;
+                    // accumulator=rods.get_channel(2);
+                    accumulator=ch3;
             }else if(strcmp(cellName,"M_cones")==0){
-                    accumulator=rods.get_channel(1);//ch2;
+                    // accumulator=rods.get_channel(1);//ch2;
+                    accumulator=ch2;
             }else if(strcmp(cellName,"S_cones")==0){
-                    accumulator=rods.get_channel(0);//ch1;
+                    // accumulator=rods.get_channel(0);//ch1;
+                    accumulator=ch1;
             }else if(strcmp(cellName,"rods")==0){
-                    accumulator=rods/3;
+                    // accumulator=rods/3; // TODO: This is wrong. Should be the sum of channels / 3 (single channel image).
+                    accumulator=rods;
             }else{
 
             // other inputs rather than cones or rods

@@ -15,13 +15,13 @@
 
 ### Simulation parameters ###
 
-retina.TempStep(1) # simulation step (in ms)
+retina.TempStep(20) # simulation step (in ms)
 retina.SimTime(1200) # simulation time (in ms)
 retina.NumTrials(1) # number of trials
 retina.PixelsPerDegree(5.0) # pixels per degree of visual angle
 retina.NRepetitions(100) # number of simulation steps every image in the input sequence is repeated
 retina.DisplayDelay(0) # display delay
-retina.DisplayZoom(10.0) # display zoom
+retina.DisplayZoom(1.0) # display zoom
 retina.DisplayWindows(3) # Displays per row
 
 ### Visual input ###
@@ -134,12 +134,12 @@ retina.Connect('SNL_ganglion', 'Output', 'Current')
 
 ### Displays and data analysis  ###
 
-retina.Show('Input', True, {'margin': 0})
-retina.Show('SNL_photoreceptors', True, {'margin': 0})
-retina.Show('SNL_horizontal', True, {'margin': 0})
-retina.Show('SNL_bipolar', True, {'margin': 0})
-retina.Show('SNL_amacrine', True, {'margin': 0})
-retina.Show('SNL_ganglion', True, {'margin': 0})
+# retina.Show('Input', True, {'margin': 0})
+# retina.Show('SNL_photoreceptors', True, {'margin': 0})
+# retina.Show('SNL_horizontal', True, {'margin': 0})
+# retina.Show('SNL_bipolar', True, {'margin': 0})
+# retina.Show('SNL_amacrine', True, {'margin': 0})
+# retina.Show('SNL_ganglion', True, {'margin': 0})
 
 # Spatial multimeters of row/col 12th at 200 ms
 # row selection

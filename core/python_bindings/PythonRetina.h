@@ -69,4 +69,8 @@ public:
         // delete input;
         // delete actual_img;
     };
+
+    double getValue(int row, int col) {
+        return iface_->getValue(row*iface_->sizeY+col);
+    };
 };
