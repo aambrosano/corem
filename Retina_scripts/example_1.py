@@ -106,7 +106,7 @@ retina.Create('StaticNonLinearity', 'SNL_ganglion', {
 ### Connections ###
 
 # Phototransduction
-retina.Connect('L_cones', 'tmp_photoreceptors', 'Current')
+retina.Connect('M_cones', 'tmp_photoreceptors', 'Current')
 retina.Connect('tmp_photoreceptors', 'SNL_photoreceptors', 'Current')
 
 # Horizontal cells
