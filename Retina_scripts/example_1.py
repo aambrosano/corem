@@ -38,6 +38,11 @@ retina.Create('LinearFilter', 'tmp_photoreceptors', {
     'tau': 30.0,
     'n': 10.0
 })
+retina.Create('LinearFilter', 'tmp_photoreceptors_2', {
+    'type': 'Gamma',
+    'tau': 30.0,
+    'n': 10.0
+})
 retina.Create('LinearFilter', 'tmp_horizontal', {
     'type': 'Gamma',
     'tau': 20.0,
@@ -107,7 +112,9 @@ retina.Create('StaticNonLinearity', 'SNL_ganglion', {
 
 # Phototransduction
 retina.Connect('M_cones', 'tmp_photoreceptors', 'Current')
+# retina.Connect('S_cones', 'tmp_photoreceptors_2', 'Current')
 retina.Connect('tmp_photoreceptors', 'SNL_photoreceptors', 'Current')
+# retina.Connect(['tmp_photoreceptors_2', '-', 'tmp_photoreceptors'], 'SNL_photoreceptors', 'Current')
 
 # Horizontal cells
 retina.Connect('SNL_photoreceptors', 'Gauss_horizontal', 'Current')
@@ -134,12 +141,14 @@ retina.Connect('SNL_ganglion', 'Output', 'Current')
 
 ### Displays and data analysis  ###
 
-# retina.Show('Input', True, {'margin': 0})
-# retina.Show('SNL_photoreceptors', True, {'margin': 0})
+retina.Show('Input', True, {'margin': 0})
+retina.Show('tmp_photoreceptors', True, {'margin': 0}) # L cones
+retina.Show('tmp_photoreceptors_2', True, {'margin': 0}) # M cones
+retina.Show('SNL_photoreceptors', True, {'margin': 0})
 # retina.Show('SNL_horizontal', True, {'margin': 0})
 # retina.Show('SNL_bipolar', True, {'margin': 0})
 # retina.Show('SNL_amacrine', True, {'margin': 0})
-# retina.Show('SNL_ganglion', True, {'margin': 0})
+retina.Show('SNL_ganglion', True, {'margin': 0})
 
 # Spatial multimeters of row/col 12th at 200 ms
 # row selection

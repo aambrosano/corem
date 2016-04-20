@@ -58,7 +58,7 @@ public:
     void reset();
     void allocateValues(const char * retinaPath, const char * outputFile, double outputfactor, double currentRep);
     void update();
-    double getValue(double cell);
+    double getValue(double cell, string layer);
     bool getAbortExecution(){return abortExecution;}
     Retina& getRetina(){return retina;}
     double getSimStep();

@@ -106,8 +106,7 @@ void InterfaceNEST::update(){
 //------------------------------------------------------------------------------//
 
 
-double InterfaceNEST::getValue(double cell){
-
+double InterfaceNEST::getValue(double cell, string layer = "Output"){
     int select_image = int(cell)/(sizeX*sizeY);
     int pos_im = int(cell) - select_image*(sizeX*sizeY);
 
@@ -117,26 +116,19 @@ double InterfaceNEST::getValue(double cell){
     vector <string> layersID;
     layersID = aux->getID(select_image);
 
-    const char * charIDO = (layersID[0]).c_str();
-    int neuron_to_display = 0;
-
-    for(int k=1;k<retina.getNumberModules();k++){
-        neuron = retina.getModule(k);
-        const char * charID = (neuron->getModuleID()).c_str();
-        if (strcmp(charID,charIDO)==0){
-            neuron_to_display = k;
-            break;
-        }
-    }
-
-    neuron = retina.getModule(neuron_to_display);
-
     int row = pos_im/sizeY;
     int col = pos_im%sizeY;
 
-    return (*neuron->getOutput())(col,row,0,0);
+    if (layer == "Output") layer = layersID[0];
 
+    for (int k = 1; k < retina.getNumberModules(); k++) {
+        if (retina.getModule(k)->getModuleID() == layer) {
+            return (*retina.getModule(k)->getOutput())(col, row, 0, 0);
+        }
+    }
 
+    neuron = retina.getModule(0);
+    return (*neuron->getOutput())(col, row, 0, 0);
 }
 
 //------------------------------------------------------------------------------//

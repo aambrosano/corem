@@ -343,9 +343,9 @@ void InterfaceNESTWrapper::convertndarray(const boost::python::api::object& img)
 
     for (int i = 0; i < cols; i++) {
         for (int j = 0; j < rows; j++){
-            inputImg(i, j, 0, 0) = buf[3*(i+j*cols)+2];
+            inputImg(i, j, 0, 0) = buf[3*(i+j*cols)];
             inputImg(i, j, 0, 1) = buf[3*(i+j*cols)+1];
-            inputImg(i, j, 0, 2) = buf[3*(i+j*cols)];
+            inputImg(i, j, 0, 2) = buf[3*(i+j*cols)+2];
         }
     }
 
@@ -353,7 +353,14 @@ void InterfaceNESTWrapper::convertndarray(const boost::python::api::object& img)
 
 InterfaceNESTWrapper::InterfaceNESTWrapper(string config_path) {
     iface_ = new InterfaceNEST();
-    iface_->allocateValues(config_path.c_str(), constants::resultID, constants::outputfactor, 0);
+
+    assert(getenv("NRP_MODELS_DIRECTORY") != nullptr);
+    fs::path retina_config_file = (string)getenv("NRP_MODELS_DIRECTORY");
+    retina_config_file /= "retina";
+    retina_config_file /= config_path;
+
+    iface_->allocateValues(retina_config_file.string().c_str(), constants::resultID,
+                           constants::outputfactor, 0);
     rows = iface_->sizeX;
     cols = iface_->sizeY;
     inputImg.resize(cols, rows, 1, 3, -1);
@@ -370,12 +377,10 @@ void InterfaceNESTWrapper::update(const py::object& img) {
         iface_->CurrentTrial,
         iface_->totalNumberTrials);
     iface_->SimTime += iface_->step;
-    // delete input;
-    // delete actual_img;
 }
 
-double InterfaceNESTWrapper::getValue(int row, int col) {
-    return iface_->getValue(row*iface_->sizeY+col);
+double InterfaceNESTWrapper::getValue(int row, int col, string layer="Output") {
+    return iface_->getValue(row*iface_->sizeY+col, layer);
 }
 
 BOOST_PYTHON_MODULE(pyretina)

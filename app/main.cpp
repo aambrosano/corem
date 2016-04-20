@@ -24,7 +24,7 @@ namespace fs = boost::filesystem;
 namespace py = boost::python;
 
 CImg<double>* custom_img(int currTime) {
-    CImg<double>* retval = new CImg<double>(25, 25, 1, 3);
+    CImg<double>* retval = new CImg<double>(320, 240, 1, 3);
     for (int i = 0; i < retval->width(); i++) {
         for (int j = 0; j < retval->height(); j++) {
             (*retval)(i, j, 0, 0) = (*retval)(i, j, 0, 1) = (*retval)(i, j, 0, 2) = 255;
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         cout << "-- Trial " << i << " --" << endl;
 
         if(interface.getAbortExecution() == false){
-            for(int k = 0; k < simTime; k += simStep){
+            for(int k = 0; k < 1000; k += simStep){
                 // Uses images from the conf file
                 // interface.update();
 

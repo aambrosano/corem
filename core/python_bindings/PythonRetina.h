@@ -3,10 +3,12 @@
 #include "../StaticNonLinearity.h"
 #include "../ShortTermPlasticity.h"
 #include <boost/python.hpp>
+#include <boost/filesystem.hpp>
 #include "../constants.h"
 #include "../InterfaceNEST.h"
 
 namespace py = boost::python;
+namespace fs = boost::filesystem;
 
 class PythonRetina {
 private:
@@ -39,7 +41,7 @@ public:
     InterfaceNESTWrapper(std::string config_path);
 
     void update(const py::object& img);
-    double getValue(int row, int col);
+    double getValue(int row, int col, string layer);
 
 private:
     InterfaceNEST  *iface_;
