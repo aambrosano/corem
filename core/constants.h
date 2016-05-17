@@ -25,6 +25,8 @@
 #define DBL_EPSILON 1.0e-9
 #define DBL_INF 1.0e9
 
+#define IS_THERE_X11 false
+
 namespace constants{
     extern std::string retinaFolder;
     extern std::string retinaScript;

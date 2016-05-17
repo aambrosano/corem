@@ -45,10 +45,12 @@ void DisplayManager::allocateValues(int number, double tstep){
         numberModules = number;
 
         // security check
+        #if IS_THERE_X11
         if (displayZoom*(double)sizeY >= CImgDisplay::screen_width()/4){
             displayZoom = CImgDisplay::screen_width()/(4.0*(double)sizeY);
             cout << "zoom has been readjusted to "<< displayZoom << endl;
         }
+        #endif
 
         for(int k=0;k<numberModules;k++){
             isShown.push_back(false);
@@ -230,6 +232,7 @@ void DisplayManager::addModule(int pos,string ID){
         // Display
         (*image,*bar).display(*disp);
 
+        #if IS_THERE_X11
         // new row of the display
         int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
 
@@ -242,6 +245,7 @@ void DisplayManager::addModule(int pos,string ID){
 
         // move display
         disp->move((int)last_col*(newY+80.0),(int)last_row*(newX+80.0));
+        #endif
 
         // Save display
         displays.push_back(disp);
@@ -385,6 +389,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
             if(step == aux[1]){
 
                 // set position
+                #if IS_THERE_X11
                 int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
 
                 if (last_col<capacity && last_col < imagesPerRow){
@@ -393,6 +398,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                     last_col = 1;
                     last_row++;
                 }
+                #endif
 
                 if(isShown[numberModules+i]==true){
 
@@ -424,6 +430,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
             multimeter *m = multimeters[i];
 
             // set position
+            #if IS_THERE_X11
             if(multimeterType[i]==0 || multimeterType[i]==2){
                 int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
 
@@ -434,6 +441,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                     last_row++;
                 }
             }
+            #endif
 
             // temporal mult.
             if(multimeterType[i]==0){
