@@ -353,11 +353,16 @@ void InterfaceNESTWrapper::convertndarray(const boost::python::api::object& img)
 
 InterfaceNESTWrapper::InterfaceNESTWrapper(string config_path) {
     iface_ = new InterfaceNEST();
-
-    assert(getenv("NRP_MODELS_DIRECTORY") != nullptr);
-    fs::path retina_config_file = (string)getenv("NRP_MODELS_DIRECTORY");
-    retina_config_file /= "retina";
-    retina_config_file /= config_path;
+    // local retina file
+    fs::path retina_config_file(config_path);
+    if (!fs::exists(config_path)) {
+      std::cout << "Local retina not found. Defaulting to generic retina folder." << std::endl;
+      // default to retina file in models directory
+      assert(getenv("NRP_MODELS_DIRECTORY") != nullptr);
+      retina_config_file = (string)getenv("NRP_MODELS_DIRECTORY");
+      retina_config_file /= "retina";
+      retina_config_file /= config_path;
+    }
 
     iface_->allocateValues(retina_config_file.string().c_str(), constants::resultID,
                            constants::outputfactor, 0);
