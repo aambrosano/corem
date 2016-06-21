@@ -1,4 +1,5 @@
 #include "PythonRetina.h"
+#include <exception>
 #include "../module.h"
 
 void PythonRetina::TempStep(double step) {
@@ -356,12 +357,20 @@ InterfaceNESTWrapper::InterfaceNESTWrapper(string config_path) {
     // local retina file
     fs::path retina_config_file(config_path);
     if (!fs::exists(config_path)) {
-      std::cout << "Local retina not found. Defaulting to generic retina folder." << std::endl;
+      std::cerr << "Local retina not found " << retina_config_file.string() << std::endl;
+      std::cout << "Defaulting to generic retina folder." << std::endl;
       // default to retina file in models directory
       assert(getenv("NRP_MODELS_DIRECTORY") != nullptr);
       retina_config_file = (string)getenv("NRP_MODELS_DIRECTORY");
       retina_config_file /= "retina";
       retina_config_file /= config_path;
+    }
+
+    if (!fs::exists(retina_config_file.string())) {
+      std::cerr << "Generic retina not found " << retina_config_file.string() << std::endl;
+      throw std::runtime_error("Retina config file not found.\nLooked for:\n"+
+                               config_path+"\n"+
+                               retina_config_file.string());
     }
 
     iface_->allocateValues(retina_config_file.string().c_str(), constants::resultID,
