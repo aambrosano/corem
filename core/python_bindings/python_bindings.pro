@@ -11,8 +11,8 @@ TEMPLATE = app
 
 INCLUDEPATH += ../core/
 
-SOURCES = PythonRetina.cpp
-HEADERS = PythonRetina.h
+SOURCES = pyretina.cpp InterfaceNESTWrapper.cpp PythonRetina.cpp
+HEADERS = InterfaceNESTWrapper.h PythonRetina.h
 
 pathToLibretina = ../../lib
 

@@ -10,7 +10,7 @@
  * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
  * <pablomc@ugr.es>
  *
- * SeeAlso: DisplayManager, FileReader, GaussFilter, GratingGenerator, LinearFilter
+ * SeeAlso: DisplayManager, GaussFilter, GratingGenerator, LinearFilter
  * module, Retina, ShortTermPlasticity, SingleCompartment, StaticNonLinearity
  */
 
@@ -18,7 +18,6 @@
 #include "vector"
 
 #include "DisplayManager.h"
-#include "FileReader.h"
 #include "Retina.h"
 
 using namespace cimg_library;
@@ -43,8 +42,6 @@ public:
     Retina retina;
     // Displays
     DisplayManager displayMg;
-    // FileReader
-    FileReader FileReaderObject;
 
     bool abortExecution;
 

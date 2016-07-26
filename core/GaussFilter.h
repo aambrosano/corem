@@ -25,6 +25,10 @@
  * SeeAlso:
  */
 
+#ifdef DEBUG
+#include <chrono>
+#endif
+
 #include <omp.h>
 #include "module.h"
 

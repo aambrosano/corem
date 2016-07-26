@@ -20,6 +20,10 @@
  */
 
 
+#ifdef DEBUG
+#include <chrono>
+#endif
+
 #include "module.h"
 
 using namespace cimg_library;

@@ -1,4 +1,4 @@
-QMAKE_CXXFLAGS+= -std=c++11
+QMAKE_CXXFLAGS+= -std=c++11 -O3
 QT       -= gui
 
 # Find python-devel with pkg-config

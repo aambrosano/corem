@@ -249,11 +249,9 @@ void DisplayManager::addModule(int pos,string ID){
 
         // Save display
         displays.push_back(disp);
-
     }else{
         displays.push_back(new CImgDisplay());
     }
-
 
 
 
@@ -267,8 +265,8 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     double newX = (double)sizeX * displayZoom;
     double newY = (double)sizeY * displayZoom;
 
-    double max=0.0,min=0.0;
-    const unsigned char color[] = {255,255,255};
+    double max = 0.0, min = 0.0;
+    const unsigned char color[] = {255, 255, 255};
 
 
 
@@ -362,7 +360,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
         const char * moduleID = (moduleIDs[i]).c_str();
         // find target module
         if(strcmp(moduleID, "Input") != 0){
-            for(int j=1;j<retina.getNumberModules();j++){
+            for(int j = 1; j < retina.getNumberModules(); j++){
                 n = retina.getModule(j);
                 if(n->checkID(moduleID)){
                     break;
@@ -491,8 +489,8 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     }
 
     // Show displays if there's an input display
-        if(isShown[0])
-            displays[0]->wait(delay);
+    if(isShown[0])
+        displays[0]->wait(delay);
 }
 
 //------------------------------------------------------------------------------//

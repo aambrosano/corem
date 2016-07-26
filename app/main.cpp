@@ -23,8 +23,8 @@ using namespace std;
 namespace fs = boost::filesystem;
 namespace py = boost::python;
 
-CImg<double>* custom_img(int currTime) {
-    CImg<double>* retval = new CImg<double>(320, 240, 1, 3);
+CImg<double>* custom_img(int currTime, int width, int height) {
+    CImg<double>* retval = new CImg<double>(width, height, 1, 3);
     for (int i = 0; i < retval->width(); i++) {
         for (int j = 0; j < retval->height(); j++) {
             (*retval)(i, j, 0, 0) = (*retval)(i, j, 0, 1) = (*retval)(i, j, 0, 2) = 255;
@@ -37,12 +37,28 @@ CImg<double>* custom_img(int currTime) {
     return retval;
 }
 
+CImg<double>* impulse_image(int width, int height) {
+    CImg<double>* retval = new CImg<double>(width, height, 1, 3);
+    for (int i = 0; i < retval->width(); i++) {
+        for (int j = 0; j < retval->height(); j++) {
+            if (i == 0) {
+                (*retval)(i, j, 0, 0) = 255;
+                (*retval)(i, j, 0, 1) = 255;
+                (*retval)(i, j, 0, 2) = 255;
+            }
+            else {
+                (*retval)(i, j, 0, 0) = (*retval)(i, j, 0, 1) = (*retval)(i, j, 0, 2) = 0;
+            }
+        }
+    }
+    return retval;
+}
+
 // main
 int main(int argc, char *argv[])
 {
     Py_Initialize();
 
-    // string currentDirRoot = constants::getPath();
     // Assuming the executable will be generated and executed in /build
     fs::path currentDirRoot = fs::initial_path() / "..";
     cout << currentDirRoot.string() << endl;
@@ -85,13 +101,19 @@ int main(int argc, char *argv[])
         cout << "-- Trial " << i << " --" << endl;
 
         if(interface.getAbortExecution() == false){
-            for(int k = 0; k < 1000; k += simStep){
+            for(int k = 0; k < 1000 ; k += simStep) {
                 // Uses images from the conf file
                 // interface.update();
 
                 // Custom images
-                CImg<double> *a = custom_img(k);
+                CImg<double> *a = impulse_image(320, 240);
                 CImg<double> *input = interface.retina.feedInput(a);
+
+                // If you want to use a local image uncomment the lines below
+                // CImg<double> a;
+                // string pathtoimg = "/home/alessandro/Pictures/court2.jpg";
+                // a.load(pathtoimg.c_str());
+
                 interface.retina.update();
                 interface.displayMg.updateDisplay(input,
                     interface.retina,

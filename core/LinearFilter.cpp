@@ -152,7 +152,9 @@ void LinearFilter::feedInput(const CImg<double>& new_input, bool /* isCurrent */
 //------------------------------------------------------------------------------//
 
 void LinearFilter::update(){
-
+#ifdef DEBUG
+    auto start = std::chrono::system_clock::now();
+#endif
     // Rotation on addresses of the last_values.
     CImg<double>* fakepoint=last_values[N];
     for(int i=1;i<N+1;++i)
@@ -176,7 +178,10 @@ void LinearFilter::update(){
           last_inputs[M-i]=last_inputs[M-i-1];
       }
 //      last_inputs[0]->fill(0.0);
-
+#ifdef DEBUG
+    std::chrono::duration<double> diff = std::chrono::system_clock::now()-start;
+    std::cout << "LinearFilters::update, " << diff.count() << std::endl;
+#endif
 
 }
 

@@ -1,40 +1,14 @@
 #include "Retina.h"
 
-Retina::Retina(int x, int y, double temporal_step){
-    step = temporal_step;
-    sizeX=x;
-    sizeY=y;
-    pixelsPerDegree = 1.0;
-    inputType = 0;
-    numberImages = 0;
-    repetitions = 0;
-
-    verbose = false;
-
-    modules.clear();
-    modules.push_back((new module()));
-
-    output = new CImg <double>(sizeY,sizeX,1,1,0.0);
-    accumulator = *(new CImg <double>(sizeY,sizeX,1,1,0.0));
-
-    RGBred = *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    RGBgreen= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    RGBblue= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch1 = *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch2= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch3= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    rods= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    X_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    Y_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    Z_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-
-
+Retina::Retina(int x, int y, double temporal_step)
+: sizeX(x), sizeY(y), step(temporal_step) {
+    this->reset(x, y, temporal_step);
 }
 
 void Retina::reset(int x, int y, double temporal_step) {
     step = temporal_step;
-    sizeX=x;
-    sizeY=y;
+    sizeX = x;
+    sizeY = y;
     pixelsPerDegree = 1.0;
     inputType = 0;
     numberImages = 0;
@@ -62,14 +36,14 @@ void Retina::reset(int x, int y, double temporal_step) {
 
 //------------------------------------------------------------------------------//
 
-void Retina::setSizeX(int x){
-    if (x>0){
+void Retina::setSizeX(int x) {
+    if (x > 0) {
         sizeX = x;
     }
 }
 
-void Retina::setSizeY(int y){
-    if (y>0){
+void Retina::setSizeY(int y) {
+    if (y > 0) {
         sizeY = y;
     }
 }
@@ -601,4 +575,42 @@ bool Retina::generateFixationalMovGrating(int X, int Y, double radius, double ji
 
 CImg <double>* Retina::updateFixGrating(double t){
     return fg->compute_grating(t);
+}
+
+void Retina::loadCircuit(std::string retinaPath, DisplayManager& displayMg) {
+
+    if (!fs::exists(retinaPath)) {
+        cout << "Wrong retina file path." << endl;
+        return;
+    }
+
+    // interpreting the retina scripts as real python files instead of parsing them
+    ifstream in(retinaPath);
+    string contents((istreambuf_iterator<char>(in)),
+        istreambuf_iterator<char>());
+    try {
+        auto py__main__ = py::import("__main__");
+        auto pyretina = py::import("pyretina");
+        PythonRetina* pr = new PythonRetina(*this, displayMg);
+        py__main__.attr("retina") = py::ptr(pr);
+        PyRun_SimpleString(contents.c_str());
+    } catch(py::error_already_set const &) {
+        PyObject *type_ptr = NULL, *value_ptr = NULL, *traceback_ptr = NULL;
+        PyErr_Fetch(&type_ptr, &value_ptr, &traceback_ptr);
+        std::string ret("Unfetchable Python error");
+        if(type_ptr != NULL){
+            py::handle<> h_type(type_ptr);
+            py::str type_pstr(h_type);
+            py::extract<std::string> e_type_pstr(type_pstr);
+            if(e_type_pstr.check())
+                ret = e_type_pstr();
+            else
+                ret = "Unknown exception type";
+        }
+        std::cout << "Error in Python: " << ret << std::endl;
+
+        std::string exception_msg = py::extract<std::string>(value_ptr);
+        std::cout << exception_msg << std::endl;
+        throw std::runtime_error("The retina configuration couldn't be loaded");
+    }
 }

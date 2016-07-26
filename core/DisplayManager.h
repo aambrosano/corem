@@ -19,6 +19,7 @@
 using namespace cimg_library;
 using namespace std;
 
+class Retina;
 class DisplayManager{
 protected:
     // Image size
@@ -109,8 +110,6 @@ public:
 
     // Set Sim step
     void setSimStep(double value);
-
-
 };
 
 #endif // DISPLAYMANAGER_H

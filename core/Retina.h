@@ -16,7 +16,7 @@
 
 #include "dirent.h"
 #include <algorithm>
-
+#include <fstream>
 
 #include "module.h"
 #include "LinearFilter.h"
@@ -26,14 +26,19 @@
 #include "fixationalMovGrating.h"
 #include "whiteNoise.h"
 #include "impulse.h"
+#include "python_bindings/PythonRetina.h"
 
 #include <boost/python.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace cimg_library;
 using namespace std;
 namespace py = boost::python;
+namespace fs = boost::filesystem;
 
-class Retina{
+class DisplayManager;
+class PythonRetina;
+class Retina {
 protected:
     // Image size
     int sizeX, sizeY;
@@ -133,8 +138,8 @@ public:
     int getNumberImages();
     // Set repetitions
     void setRepetitions(int r);
-
-
+    // Load the python configuration describing the circuit
+    void loadCircuit(std::string retinaPath, DisplayManager &displayMg);
 };
 
 #endif // RETINA_H

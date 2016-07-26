@@ -29,7 +29,6 @@ SOURCES = GaussFilter.cpp \
     InterfaceNEST.cpp \
     StaticNonLinearity.cpp \
     DisplayManager.cpp \
-    FileReader.cpp \
     whiteNoise.cpp \
     impulse.cpp \
     ShortTermPlasticity.cpp \
@@ -47,7 +46,6 @@ HEADERS = \
     InterfaceNEST.h \
     StaticNonLinearity.h \
     DisplayManager.h \
-    FileReader.h \
     whiteNoise.h \
     impulse.h \
     ShortTermPlasticity.h \

@@ -14,6 +14,10 @@
  * SeeAlso: module
  */
 
+#ifdef DEBUG
+#include <chrono>
+#endif
+
 #include <iostream>
 #include "vector"
 

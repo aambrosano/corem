@@ -185,6 +185,9 @@ void SingleCompartment::feedInput(const CImg<double>& new_input,bool isCurrent,i
 //------------------------------------------------------------------------------//
 
 void SingleCompartment::update(){
+#ifdef DEBUG
+    auto start = std::chrono::system_clock::now();
+#endif
 
     (*last_potential)=(*current_potential);
     (*current_potential).fill(0.0);
@@ -237,7 +240,10 @@ void SingleCompartment::update(){
         (*current_potential) -= (*potential_inf).mul(*exp_term);
         (*current_potential) += (*last_potential).mul(*exp_term);
 
-
+#ifdef DEBUG
+        std::chrono::duration<double> diff = std::chrono::system_clock::now()-start;
+        std::cout << "SingleCompartment::update, " << diff.count() << std::endl;
+#endif
 
 }
 

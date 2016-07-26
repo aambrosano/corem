@@ -52,6 +52,7 @@ void GaussFilter::allocateValues(){
         M[2][2] = b3*(b1+b3*b2);
         for (int i=0; i<3; i++)
             for (int j=0; j<3; j++)
+                // A factor of (1.0-b1-b2-b3) seems to be missing (check the publication cited above)
                 M[i][j] /= (1.0+b1-b2+b3)*(1.0+b2+(b1-b3)*b3);
 
     }else{
@@ -281,12 +282,19 @@ void GaussFilter::feedInput(const CImg<double> &new_input, bool, int){
 
 
 void GaussFilter::update(){
+#ifdef DEBUG
+    auto start = std::chrono::system_clock::now();
+#endif
     if(spaceVariantSigma)
         spaceVariantGaussFiltering(*inputImage);
     else
         gaussFiltering(*inputImage);
 
     *outputImage = *inputImage;
+#ifdef DEBUG
+    std::chrono::duration<double> diff = std::chrono::system_clock::now()-start;
+    std::cout << "GaussFilter::update, " << diff.count() << std::endl;
+#endif
 }
 
 //------------------------------------------------------------------------------//
