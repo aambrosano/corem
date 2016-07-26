@@ -16,11 +16,12 @@
 #include <iostream>
 #include "vector"
 #include "module.h"
+#include "constants.h"
 
 using namespace cimg_library;
 using namespace std;
 
-class StaticNonLinearity:public module{
+class EXPORT StaticNonLinearity : public module {
 protected:
 
     // type of nonlinearity
@@ -56,8 +57,8 @@ public:
 
     // Allocate values
     virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual void setX(int x){columns_=x;}
+    virtual void setY(int y){rows_=y;}
     // New input and update of equations
     virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();

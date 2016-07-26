@@ -14,7 +14,8 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <unistd.h>
+#include <cmath>
+// #include <unistd.h>
 
 // maximum path length
 #define PATH_MAX 4096
@@ -22,18 +23,26 @@
 // numerical constants
 #define PI M_PI
 #define TWOPI (2.0*PI)
-#define DBL_EPSILON 1.0e-9
-#define DBL_INF 1.0e9
 
-#define IS_THERE_X11 false
+#undef DBL_EPSILON
+const double DBL_EPSILON = 1.0e-9;
+const double DBL_INF = 1.0e9;
 
-namespace constants{
-    extern std::string retinaFolder;
-    extern std::string retinaScript;
-    extern const char* resultID;
-    extern const double outputfactor;
+#ifdef _WIN32
+#ifdef EXPORTING_RETINA
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT __declspec(dllimport)
+#endif
+#elif __linux__
+#define EXPORT
+#endif
 
-    std::string getPath();
+namespace constants {
+    extern EXPORT std::string retinaFolder;
+    extern EXPORT std::string retinaScript;
+    extern EXPORT const std::string resultID;
+    extern EXPORT const double outputfactor;
 }
 
 #endif // CONSTANTS_H

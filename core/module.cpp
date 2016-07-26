@@ -1,27 +1,27 @@
 #include "module.h"
 
-module::module(int x, int y, double temporal_step){
+module::module(int columns, int rows, double temporal_step){
     step = temporal_step;
-    sizeX=x;
-    sizeY=y;
+    columns_ = columns;
+    rows_ = rows;
 }
 
 //------------------------------------------------------------------------------//
 
-void module::setSizeX(int x){
-    if (x>0){
-        sizeX = x;
+void module::setColumns(int columns){
+    if (columns > 0) {
+        columns_ = columns;
     }
 }
 
-void module::setSizeY(int y){
-    if (y>0){
-        sizeY = y;
+void module::setRows(int rows) {
+    if (rows > 0) {
+        rows_ = rows;
     }
 }
 
 void module::set_step(double temporal_step) {
-    if (temporal_step>0){
+    if (temporal_step > 0) {
         step = temporal_step;
     }
 }

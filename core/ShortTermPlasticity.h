@@ -16,13 +16,14 @@
 #include "vector"
 
 #include "module.h"
+#include "constants.h"
 
 #define DBL_EPSILON_STP 1.0e-2
 
 using namespace cimg_library;
 using namespace std;
 
-class ShortTermPlasticity:public module{
+class EXPORT ShortTermPlasticity : public module {
 protected:
     // nonlinearity parameters
     double slope,offset,exponent,threshold;
@@ -53,8 +54,8 @@ public:
 
     // Allocate values
     virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual void setX(int x){columns_=x;}
+    virtual void setY(int y){rows_=y;}
     // New input and update of equations
     virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
     virtual void update();

@@ -14,7 +14,6 @@
  */
 
 
-#include "dirent.h"
 #include <algorithm>
 #include <fstream>
 
@@ -26,7 +25,9 @@
 #include "fixationalMovGrating.h"
 #include "whiteNoise.h"
 #include "impulse.h"
-#include "python_bindings/PythonRetina.h"
+#include "python_bindings/RetinaLoader.h"
+#include "DisplayManager.h"
+#include "constants.h"
 
 #include <boost/python.hpp>
 #include <boost/filesystem.hpp>
@@ -36,12 +37,10 @@ using namespace std;
 namespace py = boost::python;
 namespace fs = boost::filesystem;
 
-class DisplayManager;
-class PythonRetina;
-class Retina {
+class EXPORT Retina {
 protected:
     // Image size
-    int sizeX, sizeY;
+    int columns_, rows_;
     // simulation step and ppd
     // double step;
     double pixelsPerDegree;
@@ -70,36 +69,39 @@ protected:
     int repetitions;
 
     // Simulation time
-    int SimTime;
+    int simCurrTime, simDuration;
     // Current and total number of trials
-    double CurrentTrial,totalNumberTrials;
+    double CurrentTrial, totalNumberTrials;
 
     // Display comments
     bool verbose;
+    CImg<double> lastFedInput;
 
 public:
-    double step;
-
+    double simStep;
+    DisplayManager displayMg;
 
     // Constructor, copy, destructor.
-    Retina(int x=1,int y=1,double temporal_step=1.0);
+    Retina(int columns=1, int rows=1, double temporal_step=1.0);
 
-    void reset(int x=1,int y=1,double temporal_step=1.0);
+    void reset(int columns=1, int rows=1, double temporal_step=1.0);
 
     // Allocate values and set protected parameters
     void allocateValues();
-    void setSizeX(int x);
-    void setSizeY(int y);
+    void setColumns(int columns);
+    void setRows(int rows);
     void set_step(double temporal_step);
-    int getSizeX();
-    int getSizeY();
-    double getStep();
+    int getColumns();
+    int getRows();
+    double getSimStep();
     void setSimCurrentRep(double r);
     void setSimTotalRep(double r);
+    void setSimTimeTot(int t);
     void setSimTime(int t);
     double getSimCurrentRep();
     double getSimTotalRep();
-    int getSimTime();
+    int getSimDuration();
+    int getSimCurrTime();
 
     // set and get pixelsPerDegree
     void setPixelsPerDegree(double ppd);
@@ -107,7 +109,7 @@ public:
     // feedInput accepting a custom image
     CImg<double> *feedInput(CImg<double>* img);
     // New input and update of equations
-    CImg<double> *feedInput(int step);
+    CImg<double> *feedInput(int simStep);
     void update();
 
     // New module
@@ -117,13 +119,13 @@ public:
     // get number of modules
     int getNumberModules();
     // Connect modules
-    bool connect(vector <string> from, const char *to, vector <int> operations,const char *type_synapse);
+    bool connect(vector<string> from, string to, vector<int> operations, string type_synapse);
 
     // Grating generator
-    bool generateGrating(int type,double step,double lengthB,double length,double length2,int X,int Y,double freq,double T,double Lum,double Cont,double phi,double phi_t,double theta,double red, double green, double blue,double red_phi, double green_phi,double blue_phi);
+    bool generateGrating(int type,double simStep,double lengthB,double length,double length2,int X,int Y,double freq,double T,double Lum,double Cont,double phi,double phi_t,double theta,double red, double green, double blue,double red_phi, double green_phi,double blue_phi);
     CImg<double> *updateGrating(double t);
     // Grating for fixational Movements
-    bool generateFixationalMovGrating(int X,int Y,double radius,double jitter,double period,double step,double luminance,double contrast,double orientation,double red_weight,double green_weigh, double blue_weight, int type1, int type2, int ts);
+    bool generateFixationalMovGrating(int X,int Y,double radius,double jitter,double period,double simStep,double luminance,double contrast,double orientation,double red_weight,double green_weigh, double blue_weight, int type1, int type2, int ts);
     CImg<double> *updateFixGrating(double t);
     // White noise
     bool generateWhiteNoise(double mean, double contrast1,double contrast2, double period, double switchT,int X, int Y);
@@ -139,7 +141,9 @@ public:
     // Set repetitions
     void setRepetitions(int r);
     // Load the python configuration describing the circuit
-    void loadCircuit(std::string retinaPath, DisplayManager &displayMg);
+    void loadCircuit(std::string retinaPath);
+    //
+    double getValue(int cell, std::string layer="Output");
 };
 
 #endif // RETINA_H

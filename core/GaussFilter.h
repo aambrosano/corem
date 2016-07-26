@@ -31,11 +31,12 @@
 
 #include <omp.h>
 #include "module.h"
+#include "constants.h"
 
 using namespace std;
 using namespace cimg_library;
 
-class GaussFilter:public module{
+class EXPORT GaussFilter : public module {
 protected:
     // Filter parameters
     double sigma;
@@ -62,8 +63,8 @@ public:
 
     // Allocate values and set protected parameters
     virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual void setX(int x){columns_=x;}
+    virtual void setY(int y){rows_=y;}
     void setSigma(double sigm);
 
     // Fast filtering with constant sigma

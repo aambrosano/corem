@@ -12,20 +12,19 @@ SingleCompartment::SingleCompartment(int x, int y, double temporal_step):module(
 
     conductances=0;
     currents=0;
-
-    current_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    last_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    total_cond=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    potential_inf=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    tau=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    exp_term=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    current_potential=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    last_potential=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    total_cond=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    potential_inf=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    tau=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    exp_term=new CImg<double> (columns_, rows_, 1, 1, 0.0);
 }
 
 SingleCompartment::SingleCompartment(const SingleCompartment &copy) : module(copy){
 
     step=copy.step;
-    sizeX=copy.sizeX;
-    sizeY=copy.sizeY;
+    columns_=copy.columns_;
+    rows_=copy.rows_;
 
     number_current_ports=copy.number_current_ports;
     number_conductance_ports=copy.number_conductance_ports;
@@ -37,12 +36,12 @@ SingleCompartment::SingleCompartment(const SingleCompartment &copy) : module(cop
     conductances=0;
     currents=0;
 
-    current_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    last_potential=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    total_cond=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    potential_inf=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    tau=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    exp_term=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    current_potential=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    last_potential=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    total_cond=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    potential_inf=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    tau=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    exp_term=new CImg<double> (columns_, rows_, 1, 1, 0.0);
 }
 
 SingleCompartment::~SingleCompartment(){
@@ -65,10 +64,10 @@ void SingleCompartment::allocateValues(){
     currents = new CImg<double>*[number_current_ports];
 
     for (int i=0;i<number_conductance_ports;i++){
-      conductances[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+      conductances[i]=new CImg<double> (columns_, rows_, 1, 1, 0.0);
     }
     for (int j=0;j<number_current_ports;j++)
-      currents[j]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+      currents[j]=new CImg<double> (columns_, rows_, 1, 1, 0.0);
 
 
 }

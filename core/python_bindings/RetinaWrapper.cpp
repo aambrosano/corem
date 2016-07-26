@@ -1,6 +1,6 @@
-#include "InterfaceNESTWrapper.h"
+#include "RetinaWrapper.h"
 
-void InterfaceNESTWrapper::convertImage(const boost::python::api::object& img) {
+void RetinaWrapper::convertImage(const boost::python::api::object& img) {
 
     std::string objtype = py::extract<std::string>(img.attr("__class__").attr("__module__"));
     objtype += ".";
@@ -13,7 +13,7 @@ void InterfaceNESTWrapper::convertImage(const boost::python::api::object& img) {
 
 }
 
-void InterfaceNESTWrapper::convertndarray(const boost::python::api::object& img) {
+void RetinaWrapper::convertndarray(const boost::python::api::object& img) {
 
     Py_ssize_t bufLen;
     void const *buffer = NULL;
@@ -36,8 +36,8 @@ void InterfaceNESTWrapper::convertndarray(const boost::python::api::object& img)
 
 }
 
-InterfaceNESTWrapper::InterfaceNESTWrapper(string config_path) {
-    iface_ = new InterfaceNEST();
+RetinaWrapper::RetinaWrapper(string config_path) {
+    retina_ = new Retina();
     // local retina file
     fs::path retina_config_file(config_path);
     if (!fs::exists(config_path)) {
@@ -57,26 +57,27 @@ InterfaceNESTWrapper::InterfaceNESTWrapper(string config_path) {
                                retina_config_file.string());
     }
 
-    iface_->allocateValues(retina_config_file.string().c_str(), constants::resultID,
-                           constants::outputfactor, 0);
-    rows = iface_->sizeX;
-    cols = iface_->sizeY;
+    retina_->loadCircuit(retina_config_file.string());
+    retina_->allocateValues();
+#ifdef DEBUG
+    retina_->displayMg.setLNFile(constants::resultID, constants::outputfactor);
+#endif
+
+    rows = retina_->getRows();
+    cols = retina_->getColumns();
     inputImg.resize(cols, rows, 1, 3, -1);
 }
 
-void InterfaceNESTWrapper::update(const py::object& img) {
-    convertImage(img);
-    CImg<double>* input = iface_->retina.feedInput(&inputImg);
-    iface_->retina.update();
-    iface_->displayMg.updateDisplay(input,
-        iface_->retina,
-        iface_->SimTime,
-        iface_->totalSimTime,
-        iface_->CurrentTrial,
-        iface_->totalNumberTrials);
-    iface_->SimTime += iface_->step;
+RetinaWrapper::~RetinaWrapper() {
+    delete retina_;
 }
 
-double InterfaceNESTWrapper::getValue(int row, int col, string layer="Output") {
-    return iface_->getValue(row*iface_->sizeY+col, layer);
+void RetinaWrapper::update(const py::object& img) {
+    convertImage(img);
+    retina_->feedInput(&inputImg);
+    retina_->update();
+}
+
+double RetinaWrapper::getValue(int row, int col, string layer="Output") {
+    return retina_->getValue(row*retina_->getRows()+col, layer);
 }

@@ -1,14 +1,39 @@
-QMAKE_CXXFLAGS+= -std=c++11 -O3
-QT       -= gui
+CONFIG += console
+CONFIG -= app_bundle
+CONFIG -= qt
 
-# Find python-devel with pkg-config
-CONFIG += link_pkgconfig
-PKGCONFIG += python2
+QT -= gui
+QT -= core
+
+if (nodisplay) {
+    DEFINES += cimg_display=0
+}
+
+unix {
+    # Find python-devel with pkg-config
+    CONFIG += link_pkgconfig
+    PKGCONFIG += python2
+    QMAKE_CXXFLAGS += -std=c++11 -fPIC -fopenmp
+}
+
+win32 {
+    INCLUDEPATH += C:\Python27\include
+    QMAKE_CXXFLAGS += /openmp
+    # For non-wide char
+    DEFINES -= UNICODE
+    # For M_PI
+    DEFINES += _USE_MATH_DEFINES
+}
 
 # Find Boost library.
 
 ######################################### Boost include path
-_DEFAULT_BOOST_INCLUDEDIR = /usr/include/boost
+unix {
+    _DEFAULT_BOOST_INCLUDEDIR = /usr/include/boost
+}
+win32 {
+    _DEFAULT_BOOST_INCLUDEDIR = C:\Boost\include
+}
 
 # Try to use the system environment value.
 _BOOST_INCLUDEDIR = $$(BOOST_INCLUDEDIR)
@@ -33,5 +58,10 @@ isEmpty(_BOOST_LIBDIR) {
     message(environment variable \"BOOST_LIBDIR\" not detected)
 } else {
     message(detected in BOOST_LIBDIR = \"$$_BOOST_LIBDIR\".)
-    LIBS += -L$$_BOOST_LIBDIR
+    unix {
+        QMAKE_LFLAGS += -L$$_BOOST_LIBDIR
+    }
+    win32 {
+        QMAKE_LFLAGS += /LIBPATH:"$$_BOOST_LIBDIR"
+    }
 }

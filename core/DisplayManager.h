@@ -13,28 +13,29 @@
  */
 
 
+#include "DisplayWithBar.h"
 #include "multimeter.h"
-#include "Retina.h"
+#include "module.h"
+#include "constants.h"
 
 using namespace cimg_library;
 using namespace std;
 
-class Retina;
-class DisplayManager{
+class EXPORT DisplayManager {
 protected:
     // Image size
-    int sizeX, sizeY;
+    int columns_, rows_;
 
     // Display parameters
      double displayZoom;
      double delay;
      int imagesPerRow;
-     vector <bool> isShown;
-     vector <double> margin;
+     vector<bool> isShown;
+     vector<double> margin;
 
     // buffers of displays and images generated in each neural layer
-    vector <CImgDisplay*> displays;
-    CImg<double>** intermediateImages;
+    vector <DisplayWithBar*> displays;
+    CImg<double> **intermediateImages;
 
     // Multimeter buffer and parameters
     vector <multimeter*> multimeters;
@@ -48,11 +49,8 @@ protected:
     vector <double> LNInterval;
     vector <double> LNStart;
     vector <double> LNStop;
-    const char * LNFile;
+    string LNFile;
     double LNfactor;
-
-    // copy of input
-    CImg <double> *inputImage;
 
     // last row to display
     int last_row,last_col;
@@ -69,6 +67,7 @@ protected:
     // Sim step
     double simStep;
 
+    void addMultimeter(string multimeterID, string moduleID, vector<int> &aux, MultimeterType mtype, bool shown);
 
 public:
     // Constructor, copy, destructor.
@@ -80,8 +79,8 @@ public:
     void allocateValues(int number,double tstep);
 
     // Set X and Y
-    void setX(int x);
-    void setY(int y);
+    void setColumns(int columns);
+    void setRows(int rows);
 
     // other Set functions
     void setZoom(double zoom);
@@ -94,19 +93,15 @@ public:
     void modifyLN(string moduleID,double start,double stop);
 
     // Add display
-    void addModule(int pos, string ID);
+    void addDisplay(int pos, string ID);
 
     // Add multimeter
     void addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2, bool temporalSpatial, string Show);
     void addMultimeterLN(string multimeterID, string moduleID, int x, int y, double segment, double interval, double start, double stop, string Show);
-    void setLNFile(const char * file, double ampl);
+    void setLNFile(const string &file, double ampl);
 
     // Update displays
-    void updateDisplay(CImg <double> *input, Retina &retina, int step, double totalSimTime, double numberTrials,double totalNumberTrials);
-
-    // Aux functions
-    double findMin(CImg<double> *input);
-    double findMax(CImg<double> *input);
+    void updateDisplay(CImg <double> *input, vector<module*> &modules, double switchTime, int simCurrTime, double simDuration, double numberTrials,double totalNumberTrials);
 
     // Set Sim step
     void setSimStep(double value);

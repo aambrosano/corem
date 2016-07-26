@@ -1,15 +1,17 @@
 #include "LinearFilter.h"
 
-LinearFilter::LinearFilter(int x, int y, double temporal_step,double initial_value):module(x,y,temporal_step){
-    a=new double[1];
-    a[0]=1;
-    b=new double[1];
-    b[0]=1;
-    M=1;N=0;
+LinearFilter::LinearFilter(int columns, int rows, double temporal_step,double initial_value)
+    : module(columns, rows, temporal_step) {
+    a = new double[1];
+    a[0] = 1;
+    b = new double[1];
+    b[0] = 1;
+    M = 1;
+    N = 0;
 
-    initial_input_value=initial_value;
-    last_inputs=0;
-    last_values=0;
+    initial_input_value = initial_value;
+    last_inputs = 0;
+    last_values = 0;
 
 }
 
@@ -27,8 +29,8 @@ LinearFilter::LinearFilter(const LinearFilter &copy) : module(copy) {
         a[i]=copy.a[i];
 
     step=copy.step;
-    sizeX=copy.sizeX;
-    sizeY=copy.sizeY;
+    columns_=copy.columns_;
+    rows_=copy.rows_;
 
     initial_input_value=copy.initial_input_value;
     last_inputs=0;
@@ -52,11 +54,11 @@ void LinearFilter::allocateValues(){
     last_inputs = new CImg<double>*[M];
     last_values = new CImg<double>*[N+1];
 
-    last_inputs[0]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    last_inputs[0]=new CImg<double> (columns_, rows_, 1, 1, 0.0);
     for (int i=1;i<M;i++)
-      last_inputs[i]=new CImg<double> (sizeY,sizeX,1,1,initial_input_value);
+      last_inputs[i]=new CImg<double> (columns_, rows_, 1, 1, initial_input_value);
     for (int j=0;j<N+1;j++)
-      last_values[j]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+      last_values[j]=new CImg<double> (columns_, rows_, 1, 1, 0.0);
 
 }
 

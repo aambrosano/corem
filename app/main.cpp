@@ -12,7 +12,7 @@
  */
 
 #include "../CImg-1.6.0_rolling141127/CImg.h"
-#include "InterfaceNEST.h"
+#include "Retina.h"
 #include "constants.h"
 #include <boost/filesystem.hpp>
 #include <boost/python.hpp>
@@ -68,63 +68,36 @@ int main(int argc, char *argv[])
     fs::remove_all(resultsDir);
 
     // Create retina interface
-    fs::path retinaString;
+    fs::path retinaPath;
 
     // read arguments or default script
     if (argc == 1) {
-        retinaString = currentDirRoot / constants::retinaScript;
+        retinaPath = currentDirRoot / constants::retinaScript;
     } else {
-        retinaString = fs::initial_path() / (string)argv[1];
+        retinaPath = fs::initial_path() / (string)argv[1];
     }
 
-    const char * retinaSim = retinaString.c_str();
+    Retina retina(1, 1, 1.0);
+    retina.loadCircuit(retinaPath.string());
+    retina.allocateValues();
+    retina.displayMg.setLNFile(constants::resultID, constants::outputfactor);
 
-    InterfaceNEST interface;
-    interface.allocateValues(retinaSim, constants::resultID, constants::outputfactor, 0);
+    CImg<double> inputImg;
+    if (argc >= 3) {
+        inputImg.load(argv[2]);
+    }
 
-    // Read number of trials and simulation time
-    double trials = interface.getTotalNumberTrials();
-    int simTime = interface.getSimTime();
-    double simStep = interface.getSimStep();
-
-    cout << "Simulation time: " << simTime << endl;
-    cout << "Trials: " << trials << endl;
-    cout << "Simulation step: " << simStep << endl;
-
-    // Simulation
-    for (uint i = 0; i < trials; i++){
-
-        // Create new retina interface for every trial (reset values)
-        InterfaceNEST interface;
-        interface.allocateValues(retinaSim, constants::resultID, constants::outputfactor, i);
-
-        cout << "-- Trial " << i << " --" << endl;
-
-        if(interface.getAbortExecution() == false){
-            for(int k = 0; k < 1000 ; k += simStep) {
-                // Uses images from the conf file
-                // interface.update();
-
-                // Custom images
-                CImg<double> *a = impulse_image(320, 240);
-                CImg<double> *input = interface.retina.feedInput(a);
-
-                // If you want to use a local image uncomment the lines below
-                // CImg<double> a;
-                // string pathtoimg = "/home/alessandro/Pictures/court2.jpg";
-                // a.load(pathtoimg.c_str());
-
-                interface.retina.update();
-                interface.displayMg.updateDisplay(input,
-                    interface.retina,
-                    interface.SimTime,
-                    interface.totalSimTime,
-                    interface.CurrentTrial,
-                    interface.totalNumberTrials);
-                interface.SimTime+=interface.step;
-            }
+    for(int k = 0; k < retina.getSimDuration() / retina.getSimStep(); k += retina.getSimStep()) {
+        if (argc >= 3) {
+            // Using the argument image
+            retina.feedInput(&inputImg);
         }
-
+        else {
+            // Assuming no input is needed, so the retina configuration has a reference
+            // to an image sequence
+            retina.feedInput(k);
+        }
+        retina.update();
     }
 
     Py_Finalize();

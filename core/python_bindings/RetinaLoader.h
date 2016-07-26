@@ -1,25 +1,24 @@
-#pragma once
-#include "../Retina.h"
-#include "../DisplayManager.h"
-#include "../StaticNonLinearity.h"
-#include "../ShortTermPlasticity.h"
+#ifndef RETINA_LOADER_H
+#define RETINA_LOADER_H
+
+#include "Retina.h"
+#include "StaticNonLinearity.h"
+#include "ShortTermPlasticity.h"
 #include <boost/python.hpp>
 #include <boost/filesystem.hpp>
-#include "../constants.h"
+#include <algorithm>
+#include "constants.h"
 
 namespace py = boost::python;
 namespace fs = boost::filesystem;
 
 class Retina;
-class DisplayManager;
-class PythonRetina {
+class RetinaLoader {
 private:
   Retina *retina_;
-  DisplayManager *display_manager_;
 
 public:
-    PythonRetina(Retina& cpp_retina, DisplayManager& cpp_dm)
-        : retina_(&cpp_retina), display_manager_(&cpp_dm) {}
+    RetinaLoader(Retina& cpp_retina) : retina_(&cpp_retina) {}
 
     void TempStep(double);
     void SimTime(int);
@@ -36,3 +35,5 @@ public:
     void Show(std::string, bool, py::dict);
     void Multimeter(std::string, std::string, std::string, py::dict, bool);
 };
+
+#endif

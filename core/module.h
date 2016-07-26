@@ -18,42 +18,43 @@
 #include "../CImg-1.6.0_rolling141127/CImg.h"
 #include "vector"
 #include <iostream>
+#include "constants.h"
 
 using namespace cimg_library;
 using namespace std;
 
-class module{
+class EXPORT module {
 protected:
     // Image size
-    int sizeX, sizeY;
+    int columns_, rows_;
     double step;
     // module ID
     string ID;
 
     // input modules and arithmetic operations among them
-    vector <vector <int> > portArith;
-    vector <vector <string> > modulesID;
+    vector<vector<int>> sourceOperations;
+    vector<vector<string>> sourceModuleIDs;
     // types of input synapses
     vector<int> typeSynapse;
 
 public:
     // Constructor, copy, destructor.
-    module(int x=1,int y=1,double temporal_step=1.0);
+    module(int columns=1,int rows=1,double temporal_step=1.0);
 
     // set protected parameters
-    void setSizeX(int x);
-    void setSizeY(int y);
+    void setColumns(int columns);
+    void setRows(int rows);
     void set_step(double temporal_step);
 
     // add operations or ID of input modules
-    void addOperation(vector <int> ops){portArith.push_back(ops);}
-    void addID(vector <string> ID){modulesID.push_back(ID);}
+    void addOperation(vector <int> ops){sourceOperations.push_back(ops);}
+    void addSourceIDs(vector <string> ID){sourceModuleIDs.push_back(ID);}
     // get operations or ID of input modules
-    vector <int> getOperation(int op){return portArith[op];}
-    vector <string> getID(int ID){return modulesID[ID];}
+    vector <int> getOperation(int op){return sourceOperations[op];}
+    vector <string> getID(int ID){return sourceModuleIDs[ID];}
     // get size of vectors
-    int getSizeID(){return modulesID.size();}
-    int getSizeArith(){return portArith.size();}
+    int getSizeID() { return sourceModuleIDs.size(); }
+    int getSizeArith() { return sourceOperations.size(); }
 
     // Set and get the name of the module
     void setModuleID(string s){ID=s;}
@@ -63,15 +64,7 @@ public:
     void addTypeSynapse(int type){typeSynapse.push_back(type);}
     int getTypeSynapse(int port){return typeSynapse[port];}
 
-    bool checkID(const char* name){
-        const char * charID = ID.c_str();
-
-        if (strcmp(name,charID) == 0){
-            return true;
-        }else{
-            return false;
-        }
-    }
+    bool checkID(string name) { return ID == name; }
 
     // virtual functions //
     // Allocate values

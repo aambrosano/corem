@@ -39,11 +39,12 @@
 
 #include "../CImg-1.6.0_rolling141127/CImg.h"
 #include <iostream>
+#include "constants.h"
 
 using namespace cimg_library;
 using namespace std;
 
-class GratingGenerator{
+class EXPORT GratingGenerator {
 protected:
 
     // Grating parameters

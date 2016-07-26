@@ -5,8 +5,8 @@ ShortTermPlasticity::ShortTermPlasticity(int x,int y,double temporal_step,double
     offset=Vm;
     exponent = Em;
 
-    sizeX = x;
-    sizeY = y;
+    columns_ = x;
+    rows_ = y;
     step = temporal_step;
 
     kf = 0.0;
@@ -67,14 +67,14 @@ void ShortTermPlasticity::allocateValues(){
     inputImage = new CImg<double>*[7];
 
     for (int i=0;i<7;i++)
-      inputImage[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
+      inputImage[i] = new CImg<double> (columns_, rows_, 1, 1, 0.0);
 
 
     // exp(-step/tau)
     (inputImage[5])->fill(-step/tau);
     (inputImage[5])->exp();
 
-    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    outputImage = new CImg<double> (columns_, rows_, 1, 1, 0.0);
 
 }
 

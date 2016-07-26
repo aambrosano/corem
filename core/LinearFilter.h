@@ -25,11 +25,12 @@
 #endif
 
 #include "module.h"
+#include "constants.h"
 
 using namespace cimg_library;
 using namespace std;
 
-class LinearFilter:public module{
+class EXPORT LinearFilter : public module{
 protected:
     // filter parameters
     int M;
@@ -45,14 +46,14 @@ protected:
 
 public:
     // Constructor, copy, destructor.
-    LinearFilter(int x=1,int y=1,double temporal_step=1.0,double initial_value=0.0);
+    LinearFilter(int columns=1,int rows=1,double temporal_step=1.0,double initial_value=0.0);
     LinearFilter(const LinearFilter& copy);
     ~LinearFilter(void);
 
     // Allocate values and set protected parameters
     virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual void setX(int x){columns_=x;}
+    virtual void setY(int y){rows_=y;}
 
     // Exponential and gamma filter
     void Exp(double tau);

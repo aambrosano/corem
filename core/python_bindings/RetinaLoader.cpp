@@ -1,16 +1,16 @@
-#include "PythonRetina.h"
+#include "RetinaLoader.h"
 #include <exception>
 #include "../module.h"
 
-void PythonRetina::TempStep(double step) {
+void RetinaLoader::TempStep(double step) {
     retina_->set_step(step);
 };
 
-void PythonRetina::SimTime(int sim_time) {
-    retina_->setSimTime(sim_time);
+void RetinaLoader::SimTime(int sim_time) {
+    retina_->setSimTimeTot(sim_time);
 };
 
-void PythonRetina::NumTrials(double ntrials) {
+void RetinaLoader::NumTrials(double ntrials) {
     if (ntrials > 0) {
         retina_->setSimTotalRep(ntrials);
     }
@@ -20,7 +20,7 @@ void PythonRetina::NumTrials(double ntrials) {
     }
 };
 
-void PythonRetina::PixelsPerDegree(double ppd) {
+void RetinaLoader::PixelsPerDegree(double ppd) {
     if (ppd > 0.0) {
         retina_->setPixelsPerDegree(ppd);
     }
@@ -30,7 +30,7 @@ void PythonRetina::PixelsPerDegree(double ppd) {
     }
 };
 
-void PythonRetina::NRepetitions(double repetitions) {
+void RetinaLoader::NRepetitions(double repetitions) {
     if (repetitions > 0) {
         retina_->setRepetitions(repetitions);
     }
@@ -40,9 +40,9 @@ void PythonRetina::NRepetitions(double repetitions) {
     }
 };
 
-void PythonRetina::DisplayDelay(int delay) {
+void RetinaLoader::DisplayDelay(int delay) {
     if (delay >= 0) {
-        display_manager_->setDelay(delay);
+        retina_->displayMg.setDelay(delay);
     }
     else {
         std::cout << "Error: delay < 0" << std::endl;
@@ -50,9 +50,9 @@ void PythonRetina::DisplayDelay(int delay) {
     }
 };
 
-void PythonRetina::DisplayZoom(double zoom) {
+void RetinaLoader::DisplayZoom(double zoom) {
     if (zoom >= 0) {
-        display_manager_->setZoom(zoom);
+        retina_->displayMg.setZoom(zoom);
     }
     else {
         std::cout << "Error: zoom < 0" << std::endl;
@@ -60,9 +60,9 @@ void PythonRetina::DisplayZoom(double zoom) {
     }
 };
 
-void PythonRetina::DisplayWindows(int windows_per_row) {
+void RetinaLoader::DisplayWindows(int windows_per_row) {
     if (windows_per_row > 0) {
-        display_manager_->setImagesPerRow(windows_per_row);
+        retina_->displayMg.setImagesPerRow(windows_per_row);
     }
     else {
         std::cout << "Error: windows_per_row <= 0" << std::endl;
@@ -70,7 +70,7 @@ void PythonRetina::DisplayWindows(int windows_per_row) {
     }
 };
 
-void PythonRetina::Input(std::string input_type, py::dict args) {
+void RetinaLoader::Input(std::string input_type, py::dict args) {
     if (input_type == "sequence") {
         // TODO: check return value
         retina_->setInputSeq(py::extract<std::string>(args["path"]));
@@ -83,8 +83,8 @@ void PythonRetina::Input(std::string input_type, py::dict args) {
             py::extract<float>(args["length1"]),
             py::extract<float>(args["length2"]),
             py::extract<float>(args["length3"]),
-            py::extract<float>(args["sizeX"]),
-            py::extract<float>(args["sizeY"]),
+            py::extract<float>(args["columns"]),
+            py::extract<float>(args["rows"]),
             py::extract<float>(args["freq"]),
             py::extract<float>(args["period"]),
             py::extract<float>(args["Lum"]),
@@ -104,8 +104,8 @@ void PythonRetina::Input(std::string input_type, py::dict args) {
     else if (input_type == "fixationalMovGrating") {
         // TODO: check return value
         retina_->generateFixationalMovGrating(
-            py::extract<float>(args["sizeX"]),
-            py::extract<float>(args["sizeY"]),
+            py::extract<float>(args["columns"]),
+            py::extract<float>(args["rows"]),
             py::extract<float>(args["circle_radius"]),
             py::extract<float>(args["jitter_period"]),
             py::extract<float>(args["spatial_period"]),
@@ -142,43 +142,43 @@ void PythonRetina::Input(std::string input_type, py::dict args) {
             py::extract<float>(args["stop"]),
             py::extract<float>(args["amplitude"]),
             py::extract<float>(args["offset"]),
-            py::extract<float>(args["sizeX"]),
-            py::extract<float>(args["sizeY"])
+            py::extract<float>(args["columns"]),
+            py::extract<float>(args["rows"])
         );
         retina_->setRepetitions(1.0);
     }
     else if (input_type == "camera") {
         py::tuple size = py::extract<py::tuple>(args["size"]);
-        retina_->setSizeX(py::extract<int>(size[1]));
-        retina_->setSizeY(py::extract<int>(size[0]));
+        retina_->setColumns(py::extract<int>(size[0]));
+        retina_->setRows(py::extract<int>(size[1]));
     }
     else {
         std::cout << "Error: invalid input type" << std::endl;
     }
 }
 
-void PythonRetina::Create(std::string module_type, std::string module_id, py::dict args) {
+void RetinaLoader::Create(std::string module_type, std::string module_id, py::dict args) {
     module* newModule;
     if (module_type == "LinearFilter") {
-        newModule = new LinearFilter(retina_->getSizeX(), retina_->getSizeY(), retina_->getStep(), 0.0);
+        newModule = new LinearFilter(retina_->getColumns(), retina_->getRows(), retina_->getSimStep(), 0.0);
     }
     else if (module_type == "SingleCompartment") {
-        newModule = new SingleCompartment(retina_->getSizeX(), retina_->getSizeY(), retina_->getStep());
+        newModule = new SingleCompartment(retina_->getColumns(), retina_->getRows(), retina_->getSimStep());
     }
     else if (module_type == "StaticNonLinearity") {
-        newModule = new StaticNonLinearity(retina_->getSizeX(), retina_->getSizeY(), retina_->getStep(), 0);
+        newModule = new StaticNonLinearity(retina_->getColumns(), retina_->getRows(), retina_->getSimStep(), 0);
     }
     else if (module_type == "CustomNonLinearity") {
-        newModule = new StaticNonLinearity(retina_->getSizeX(), retina_->getSizeY(), retina_->getStep(), 1);
+        newModule = new StaticNonLinearity(retina_->getColumns(), retina_->getRows(), retina_->getSimStep(), 1);
     }
     else if (module_type == "SigmoidNonLinearity") {
-        newModule = new StaticNonLinearity(retina_->getSizeX(), retina_->getSizeY(), retina_->getStep(), 2);
+        newModule = new StaticNonLinearity(retina_->getColumns(), retina_->getRows(), retina_->getSimStep(), 2);
     }
     else if (module_type == "ShortTermPlasticity") {
-        newModule = new ShortTermPlasticity(retina_->getSizeX(), retina_->getSizeY(), retina_->getStep(), 0.0, 0.0, 0.0, 0.0, false);
+        newModule = new ShortTermPlasticity(retina_->getColumns(), retina_->getRows(), retina_->getSimStep(), 0.0, 0.0, 0.0, 0.0, false);
     }
     else if (module_type == "GaussFilter") {
-        newModule = new GaussFilter(retina_->getSizeX(), retina_->getSizeY(), retina_->getPixelsPerDegree());
+        newModule = new GaussFilter(retina_->getColumns(), retina_->getRows(), retina_->getPixelsPerDegree());
     }
     else {
         std::cout << "Error: invalid module type." << std::endl;
@@ -194,7 +194,7 @@ void PythonRetina::Create(std::string module_type, std::string module_id, py::di
     const py::object vals = args.itervalues();
     unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
 
-    for (uint i = 0; i < len; i++) {
+    for (unsigned int i = 0; i < len; i++) {
         py::object key, v;
         key = keys.attr("next")();
         v = vals.attr("next")();
@@ -214,11 +214,11 @@ void PythonRetina::Create(std::string module_type, std::string module_id, py::di
     retina_->addModule(newModule, module_id);
 }
 
-void PythonRetina::Connect(py::object arg0, std::string connect_to, std::string type_synapse) {
+void RetinaLoader::Connect(py::object arg0, std::string connect_to, std::string type_synapse) {
     vector <int> operations;
     vector <string> modulesID;
 
-    display_manager_->allocateValues(retina_->getNumberModules(), retina_->getStep());
+    retina_->displayMg.allocateValues(retina_->getNumberModules(), retina_->getSimStep());
     std::string arg0_type = py::extract<std::string>(arg0.attr("__class__").attr("__name__"));
 
     if (arg0_type == "str") {
@@ -227,7 +227,7 @@ void PythonRetina::Connect(py::object arg0, std::string connect_to, std::string 
     else if (arg0_type == "list") {
         py::object l = arg0;
         unsigned long size = py::extract<unsigned long>(l.attr("__len__")());
-        for (uint i = 0; i < size; i++) {
+        for (unsigned int i = 0; i < size; i++) {
             std::string entry = py::extract<std::string>(l[i]);
             if (i % 2) {
                 if (entry == "+") operations.push_back(0);
@@ -248,45 +248,47 @@ void PythonRetina::Connect(py::object arg0, std::string connect_to, std::string 
     }
 
     // TODO: check return value
-    retina_->connect(modulesID, connect_to.c_str(), operations, type_synapse.c_str());
+    retina_->connect(modulesID, connect_to, operations, type_synapse);
 }
 
-void PythonRetina::Show(std::string module_id, bool show, py::dict args) {
+void RetinaLoader::Show(std::string module_id, bool show, py::dict args) {
     for(int l = 1; l < retina_->getNumberModules(); l++){
         module *m = retina_->getModule(l);
         string ID = m->getModuleID();
 
         if (ID == module_id) {
             if (show) {
-                display_manager_->setIsShown(true, l);
-                display_manager_->setIsShown(true, 0);
+                retina_->displayMg.setIsShown(true, l);
+                retina_->displayMg.setIsShown(true, 0);
             }
-            else display_manager_->setIsShown(false, l);
+            else retina_->displayMg.setIsShown(false, l);
         }
 
         unsigned long margin = py::extract<unsigned long>(args["margin"]);
         if (margin > 0) {
-            display_manager_->setMargin(margin, l);
+            retina_->displayMg.setMargin(margin, l);
         }
     }
 
     if (module_id == "Input") {
         if (show)
-            display_manager_->setIsShown(true, 0);
+            retina_->displayMg.setIsShown(true, 0);
         else
-            display_manager_->setIsShown(false, 0);
+            retina_->displayMg.setIsShown(false, 0);
 
         unsigned long margin = py::extract<unsigned long>(args["margin"]);
         if (margin > 0) {
-            display_manager_->setMargin(margin, 0);
+            retina_->displayMg.setMargin(margin, 0);
         }
     }
 }
 
-void PythonRetina::Multimeter(std::string multimeter_type, std::string multimeter_id, std::string module_id, py::dict args, bool show) {
+void RetinaLoader::Multimeter(std::string multimeter_type, std::string multimeter_id, std::string module_id, py::dict args, bool show) {
     std::string showstr;
     if (show) showstr = "True";
     else showstr = "False";
+
+    std::transform(multimeter_type.begin(), multimeter_type.end(), multimeter_type.begin(), ::tolower);
 
     if (multimeter_type == "spatial") {
         int param1 = py::extract<int>(args["value"]);
@@ -294,17 +296,17 @@ void PythonRetina::Multimeter(std::string multimeter_type, std::string multimete
 
         if (!rowcol) param1 = -param1;
 
-        display_manager_->addMultimeterTempSpat(
+        retina_->displayMg.addMultimeterTempSpat(
             multimeter_id, module_id, param1, py::extract<int>(args["timeStep"]), false, showstr
         );
     }
     else if (multimeter_type == "temporal") {
-        display_manager_->addMultimeterTempSpat(
+        retina_->displayMg.addMultimeterTempSpat(
             multimeter_id, module_id, py::extract<int>(args["x"]), py::extract<int>(args["y"]), true, showstr
         );
     }
-    else if (multimeter_type == "Linear-Nonlinear") {
-        display_manager_->addMultimeterLN(
+    else if (multimeter_type == "linear-nonlinear") {
+        retina_->displayMg.addMultimeterLN(
             multimeter_id, module_id, py::extract<int>(args["x"]), py::extract<int>(args["y"]),
             py::extract<double>(args["segment"]), py::extract<double>(args["interval"]),
             py::extract<double>(args["start"]), py::extract<double>(args["stop"]), showstr

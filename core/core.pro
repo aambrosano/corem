@@ -5,19 +5,36 @@
 #-------------------------------------------------
 
 include(../retina.pri)
-QT       -= core
 
+TEMPLATE = lib
 
 ######################################### Config
-QMAKE_CXXFLAGS+= -fopenmp -fPIC
-QMAKE_LFLAGS +=  -fopenmp -shared
-LIBS +=  -lX11 -lpthread -lboost_python -lboost_filesystem -lboost_system
+
 DESTDIR = ../lib
-TARGET = libretina.so
 
-CONFIG -= app_bundle
+unix {
+    TARGET = retina
 
-TEMPLATE = app
+    QMAKE_LFLAGS += -shared
+    LIBS += -lX11 -lpthread -fopenmp
+    LIBS += -lboost_python -lboost_filesystem -lboost_system
+}
+win32 {
+    TARGET = retina
+
+    CONFIG += dll
+
+    DEFINES += EXPORTING_RETINA
+
+    QMAKE_LFLAGS += /LIBPATH:"C:\Python27-x64\libs"
+    LIBS += user32.lib gdi32.lib shell32.lib
+
+    CONFIG(debug, debug|release) {
+        LIBS += boost_python-vc120-mt-gd-1_61.lib
+    } else {
+        LIBS += boost_python-vc120-mt-1_61.lib
+    }
+}
 
 SOURCES = GaussFilter.cpp \
     multimeter.cpp \
@@ -26,14 +43,14 @@ SOURCES = GaussFilter.cpp \
     module.cpp \
     Retina.cpp \
     GratingGenerator.cpp \
-    InterfaceNEST.cpp \
     StaticNonLinearity.cpp \
     DisplayManager.cpp \
     whiteNoise.cpp \
     impulse.cpp \
     ShortTermPlasticity.cpp \
     fixationalMovGrating.cpp \
-    constants.cpp
+    constants.cpp \
+    DisplayWithBar.cpp
 
 HEADERS = \
     GaussFilter.h \
@@ -43,11 +60,11 @@ HEADERS = \
     module.h \
     Retina.h \
     GratingGenerator.h \
-    InterfaceNEST.h \
     StaticNonLinearity.h \
     DisplayManager.h \
     whiteNoise.h \
     impulse.h \
     ShortTermPlasticity.h \
     fixationalMovGrating.h \
-    constants.h
+    constants.h \
+    DisplayWithBar.h

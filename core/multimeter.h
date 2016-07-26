@@ -20,20 +20,22 @@
 #include "../CImg-1.6.0_rolling141127/CImg.h"
 
 #include "vector"
-#include "dirent.h"
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
 #include <algorithm>
+#include <boost/filesystem.hpp>
 
 #include "constants.h"
 
 // FFT
-#define _USE_MATH_DEFINES
+// #define _USE_MATH_DEFINES
 
 
 using namespace cimg_library;
 using namespace std;
+
+namespace fs = boost::filesystem;
 
 class multimeter{
 protected:
@@ -57,24 +59,25 @@ public:
     multimeter(int x=1,int y=1);
 
     // Spatial multimeter
-    void showSpatialProfile(CImg<double> img,bool rowCol,int number,string title,int col,int row,double waitTime);
+    void showSpatialProfile(CImg<double> img,bool rowCol,int number, const string &title,int col,int row,double waitTime);
 
     // Temporal multimeter
     void recordValue(double value);
-    void showTemporalProfile(string title, int col, int row, double waitTime,const char * TempFile);
+    void showTemporalProfile(const string &title, int col, int row, double waitTime, const string &TempFile);
 
     // LN analysis
     void recordInput(double value);
-    void showLNAnalysis(string title, int col, int row, double waitTime, double segment,double interval, double start, double stop, double numberTrials,const char * LNFile);
-    void showLNAnalysisAvg(int col, int row,double waitTime, double segment, double start, double stop, double numberTrials, const char * LNFile, double ampl);
-    void saveArray(double* array, int arraySize, string fileID);
+    void showLNAnalysis(const string &title, int col, int row, double waitTime, double segment,double interval, double start,
+                        double stop, double numberTrials, const string &LNFile);
+    void showLNAnalysisAvg(int col, int row,double waitTime, double segment, double start, double stop, double numberTrials,
+                           const string &LNFile, double ampl);
+    void saveArray(double* array, unsigned int arraySize, string fileID);
     void getSwitchTime(double t){switchTime=t;}
-    string getDir();
-    const char * readFile(const char * File);
-    void removeFile(const char * File);
+    fs::path getExecutablePath();
+    void removeResultsFile(const string &filename);
 
-    vector<double> readSeq(const char *LNFile);
-    void saveSeq(vector<double> newSeq, const char * LNFile, double maxSize);
+    vector<double> readSeq(const string &LNFile);
+    void saveSeq(vector<double> newSeq, const string &LNFile, double maxSize);
 
     //Sim step
     void setSimStep(double value);
@@ -84,5 +87,7 @@ public:
     void conj(double data[], double copy[], int NFFT);
 
 };
+
+enum MultimeterType { Temporal = 0, Spatial = 1, LinearNonLinear = 2 };
 
 #endif // MULTIMETER_H

@@ -12,52 +12,52 @@ void multimeter::setSimStep(double value){
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showSpatialProfile(CImg<double> img,bool rowCol,int number,string title,int col,int row,double waitTime){
+void multimeter::showSpatialProfile(CImg<double> img, bool rowCol, int number, const string &title,
+                                    int col, int row, double waitTime) {
 
     double dim = 0.0;
 
-    if(rowCol == true){
+    if(rowCol == true) {
         dim = img.height();
-    }else{
+    } else {
         dim = img.width();
     }
 
-
-    CImg <double> *SpatialProfile1 = new CImg <double>(dim,1,1,1,0);
+    CImg <double> *SpatialProfile1 = new CImg <double>(dim, 1, 1, 1, 0);
 
     double max_value1 = DBL_EPSILON;
     double min_value1 = DBL_INF;
 
-    for(int k=0;k<dim;k++){
-        if(rowCol == true){
-            (*SpatialProfile1)(k,0,0,0)=img(k,number,0,0);
+    for (int k=0; k < dim; k++) {
+        if (rowCol == true) {
+            (*SpatialProfile1)(k, 0, 0, 0) = img(k, number, 0, 0);
         }else{
-            (*SpatialProfile1)(k,0,0,0)=img(number,k,0,0);
+            (*SpatialProfile1)(k, 0, 0, 0) = img(number, k, 0, 0);
         }
 
-        if ((*SpatialProfile1)(k,0,0,0)>max_value1)
-            max_value1 = (*SpatialProfile1)(k,0,0,0);
-        if ((*SpatialProfile1)(k,0,0,0)<min_value1)
-            min_value1 = (*SpatialProfile1)(k,0,0,0);
+        if ((*SpatialProfile1)(k, 0, 0, 0) > max_value1)
+            max_value1 = (*SpatialProfile1)(k, 0, 0, 0);
+        if ((*SpatialProfile1)(k, 0, 0, 0) < min_value1)
+            min_value1 = (*SpatialProfile1)(k, 0, 0, 0);
 
     }
 
-    if(max_value1==min_value1){
-        max_value1+=1;
-        min_value1-=1;
+    if(max_value1 == min_value1) {
+        max_value1 += 1;
+        min_value1 -= 1;
     }
 
-    if(min_value1>0)
+    if(min_value1 > 0)
         min_value1 = 0;
-    if(max_value1<0)
+    if(max_value1 < 0)
         max_value1 = 0;
 
 //    // plot
-    if(waitTime > -2){
+    if(waitTime > -2) {
 
-        const unsigned char color1[] = {255,0,0};
-        const unsigned char color2[] = {0,0,255};
-        unsigned char back_color[] = {255,255,255};
+        const unsigned char color1[] = {255, 0, 0};
+        const unsigned char color2[] = {0, 0, 255};
+        unsigned char back_color[] = {255, 255, 255};
         CImg <unsigned char> *profile = new CImg <unsigned char>(400,256,1,3,0);
         profile->fill(*back_color);
         const char * titleChar = (title).c_str();
@@ -94,11 +94,10 @@ void multimeter::recordInput(double value){
 //------------------------------------------------------------------------------//
 
 
-void multimeter::showTemporalProfile(string title,int col,int row, double waitTime, const char * TempFile){
-
+void multimeter::showTemporalProfile(const string &title, int col, int row, double waitTime, const string &TempFile) {
 
     CImg <double> *temporalProfilet = new CImg <double>(temporal.size(),1,1,1,0);
-    double temp[temporal.size()];
+    double *temp = new double[temporal.size()];
 
     double max_value = DBL_EPSILON;
     double min_value = DBL_INF;
@@ -124,7 +123,7 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         max_value = 0;
 
     // remove file and save new file
-    removeFile(TempFile);
+    fs::remove(TempFile);
     saveArray(temp,temporal.size(),TempFile);
 
     // plot
@@ -153,11 +152,12 @@ void multimeter::showTemporalProfile(string title,int col,int row, double waitTi
         }
     }
 
+    delete temp;
 }
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segment, double /* start */, double /* stop */, double numberTrials, const char * LNFile, double ampl){
+void multimeter::showLNAnalysisAvg(int col, int row, double waitTime, double segment, double /* start */, double /* stop */, double numberTrials, const string &LNFile, double ampl){
 
     // normalize input
     double mean_value1 = 0;
@@ -173,10 +173,10 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
     }
 
     // read values from file
-    const char* to_file = readFile(LNFile);
+    fs::path to_file = getExecutablePath() / "results" / LNFile;
 
     std::ifstream fin;
-    fin.open(to_file);
+    fin.open(to_file.string());
     vector<double> F;
 
     while (!fin.eof())
@@ -187,7 +187,6 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
       token[0] = strtok(buf, "\n");
 
       F.push_back(atof(token[0]));
-
     }
 
     fin.close();
@@ -195,19 +194,9 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
     // Non-linearity: The stimulus is convolved with the filter.
     // g = S*F
 
-//    int length = (stop-start);
 
-    const char * seq1 = "inp";
-    const char * seq2 = "tmp";
-
-    char seqFile1[1000];
-    char seqFile2[1000];
-
-    strcpy(seqFile1,seq1);
-    strcat(seqFile1,LNFile);
-
-    strcpy(seqFile2,seq2);
-    strcat(seqFile2,LNFile);
+    string seqFile1 = "inp" + LNFile;
+    string seqFile2 = "tmp" + LNFile;
 
     vector <double> historyInput = readSeq(seqFile1);
     vector <double> historyTemporal = readSeq(seqFile2);
@@ -333,7 +322,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
     double max_valuex = 0;double max_valuey = -DBL_INF;
     double min_valuex = 0;double min_valuey = DBL_INF;
 
-    double auxF[int(segment)];
+    double *auxF = new double[int(segment)];
 
     for(int k=0;k<segment;k++){
         (*temporalProfile)(k,0,0,0)=F[2*k+1]/numberTrials;
@@ -346,8 +335,10 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
 
     // remove LN file and save new file
-    removeFile(LNFile);
+    removeResultsFile(LNFile);
     saveArray(auxF,int(segment),LNFile);
+
+    delete auxF;
 
     // discard the beginning of the sequence to plot g
     // int begin = start;
@@ -441,19 +432,13 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
 
     // Remove and save new static NL
-    const char * SNL = "SNL";
-    const char * SNL2 = "SNL2";
-    char f1[1000];
-    char f2[1000];
-    strcpy(f1,SNL);
-    strcat(f1,LNFile);
-    strcpy(f2,SNL2);
-    strcat(f2,LNFile);
+    string f1 = "SNL" + LNFile;
+    string f2 = "SNL2" + LNFile;
 
-    removeFile((const char*)f1);
-    removeFile((const char*)f2);
-    saveArray(auxSP,400,f1);
-    saveArray(auxSP2,400,f2);
+    removeResultsFile(f1);
+    removeResultsFile(f2);
+    saveArray(auxSP, 400, f1);
+    saveArray(auxSP2, 400, f2);
 
 
     // display results
@@ -498,7 +483,8 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime,double segm
 
 //------------------------------------------------------------------------------//
 
-void multimeter::showLNAnalysis(string /* title */, int /* col */, int /* row */, double waitTime, double segment, double interval, double start, double stop,double numberTrials,const char * LNFile){
+void multimeter::showLNAnalysis(const string &/* title */, int /* col */, int /* row */, double waitTime, double segment, double interval, double start,
+                                double stop,double numberTrials, const string &LNFile) {
 
 
     // normalize vectors
@@ -539,20 +525,11 @@ void multimeter::showLNAnalysis(string /* title */, int /* col */, int /* row */
     }
 
     // save seq
-    const char * seq1 = "inp";
-    const char * seq2 = "tmp";
+    string seqFile1 = "inp" + LNFile;
+    string seqFile2 = "tmp" + LNFile;
 
-    char seqFile1[1000];
-    char seqFile2[1000];
-
-    strcpy(seqFile1,seq1);
-    strcat(seqFile1,LNFile);
-
-    strcpy(seqFile2,seq2);
-    strcat(seqFile2,LNFile);
-
-    saveSeq(historyInput,seqFile1,(stop-start)*2*simStep);
-    saveSeq(historyTemporal,seqFile2,(stop-start)*2*simStep);
+    saveSeq(historyInput, seqFile1, (stop-start)*2*simStep);
+    saveSeq(historyTemporal, seqFile2, (stop-start)*2*simStep);
 
     // calculate NFFT as the next higher power of 2 >= Nx.
     int NFFT = (int)pow(2.0, ceil(log((double)segment)/log(2.0)));
@@ -659,7 +636,7 @@ void multimeter::showLNAnalysis(string /* title */, int /* col */, int /* row */
     // waitTime = -1 -> display is shown till the user close it
     // waitTime >= 0 -> display is shown a duration waitTime
 
-    if(waitTime > -2 and numberTrials==1){
+    if (waitTime > -2 && numberTrials == 1) {
 
 //        CImg <double> *temporalProfile = new CImg <double>(segment,1,1,1,0);
 
@@ -704,7 +681,7 @@ void multimeter::showLNAnalysis(string /* title */, int /* col */, int /* row */
 
 //------------------------------------------------------------------------------//
 
-void multimeter::fft(double data[], int nn, int isign){
+void multimeter::fft(double data[], int nn, int isign) {
     /*
      FFT/IFFT routine. (see pages 507-508 of Numerical Recipes in C)
 
@@ -786,66 +763,33 @@ void multimeter::conj(double data[], double copy[], int NFFT){
 
 //------------------------------------------------------------------------------//
 
-string multimeter::getDir(){
-
-    char* cwd;
-    char buff[PATH_MAX + 1];
-
-    cwd = getcwd( buff, PATH_MAX + 1 );
-    string currentDir(cwd);
-
-    size_t pos = currentDir.find(constants::retinaFolder);
-    string currentDirRoot = currentDir.substr(0,pos+(constants::retinaFolder.length())+1);
-
-    if (pos==std::string::npos)
-        cout << "error: impossible to find the simulator folder" << endl;
-
-    return currentDirRoot;
-}
-
-//------------------------------------------------------------------------------//
-
-const char* multimeter::readFile(const char * File){
-
-    string stringResult = getDir()+ "results/";
-    const char * root = (stringResult).c_str();
-    char* result = new char[1000];
-
-    strcpy(result,root);
-    strcat(result,File);
-
-    return (const char*)result;
+fs::path multimeter::getExecutablePath(){
+    return fs::read_symlink("/proc/self/exe").parent_path().string();
 }
 
 //------------------------------------------------------------------------------//
 
 
-void multimeter::removeFile(const char *File){
-
-    string stringResult = getDir()+ "results/";
-    const char * root = (stringResult).c_str();
-    char result[1000];
-
-    strcpy(result,root);
-    strcat(result,File);
-
-    remove((const char*)result);
+void multimeter::removeResultsFile(const string &filename){
+    fs::path to_delete = getExecutablePath() / "results" / filename;
+    if (fs::is_regular_file(to_delete)) {
+        fs::remove(to_delete);
+    } else {
+        throw runtime_error("removeResultsFile: " + to_delete.string() + " file not existing.");
+    }
 }
 
 //------------------------------------------------------------------------------//
 
-vector<double> multimeter::readSeq(const char * LNFile){
+vector<double> multimeter::readSeq(const string &LNFile) {
 
     // read data from file
-    const char * seq = "seq";
-    char seqFile[1000];
-    strcpy(seqFile,seq);
-    strcat(seqFile,LNFile);
+    string seqFile = "seq" + LNFile;
 
-    const char* to_file = readFile((const char *)seqFile);
+    fs::path to_file = getExecutablePath() / "results" / seqFile;
 
     std::ifstream fin;
-    fin.open(to_file);
+    fin.open(to_file.string());
     vector<double> F;
 
     if (fin.good()) {
@@ -872,15 +816,11 @@ vector<double> multimeter::readSeq(const char * LNFile){
 //------------------------------------------------------------------------------//
 
 
-void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSize){
-
+void multimeter::saveSeq(vector<double> newSeq, const string &LNFile, double maxSize) {
     // read first
     vector<double> FileSeq = readSeq(LNFile);
 
-    const char * seq = "seq";
-    char seqFile[1000];
-    strcpy(seqFile,seq);
-    strcat(seqFile,LNFile);
+    string seqFile = "seq" + LNFile;
 
     // new seq
     if(FileSeq.size()==0){
@@ -889,14 +829,14 @@ void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSiz
         double *F = (double *) malloc((newSeq.size()) * sizeof(double));
         for(unsigned int k=0;k<newSeq.size();k++)
             F[k]=newSeq[k];
-        saveArray(F, newSeq.size(), (const char *)seqFile);
+        saveArray(F, newSeq.size(), seqFile);
 
     // another seq
     }else{
 
         if(FileSeq.size() < maxSize){
             // remove file
-            removeFile((const char *)seqFile);
+            removeResultsFile(seqFile);
 
             // save new array
             double *F = (double *) malloc((FileSeq.size() + newSeq.size() ) * sizeof(double));
@@ -908,7 +848,7 @@ void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSiz
                 }
             }
 
-            saveArray(F, FileSeq.size() + newSeq.size(),(const char *)seqFile);
+            saveArray(F, FileSeq.size() + newSeq.size(), seqFile);
         }
 
 
@@ -919,94 +859,33 @@ void multimeter::saveSeq(vector<double> newSeq,const char * LNFile,double maxSiz
 
 //------------------------------------------------------------------------------//
 
-void multimeter::saveArray(double* array, int arraySize, string fileID){
+void multimeter::saveArray(double* array, unsigned int arraySize, string fileID) {
 
-      // read file
-      std::vector <std::string> files;
-      dirent* de;
+    fs::path resultsFile = getExecutablePath() / "results" / fileID;
 
-      string stringResult = getDir()+ "results/";
-      const char * currentDir = (stringResult).c_str();
-      DIR* dp=opendir (currentDir);
+    unsigned int idx = 0;
+    if (fs::is_regular_file(resultsFile)) {
+        // Update the values
+        double tmp;
 
-      if (dp){
-          while (true)
-          {
-              de = readdir( dp );
-              if (de == NULL)
-                  break;
-              files.push_back( std::string( de->d_name ) );
-          }
+        fin.open(resultsFile.string());
+        fin.precision(64);
+        fin >> tmp;
 
-        closedir( dp );
-        std::sort( files.begin(), files.end() );
-      }else{
-          cout << "the directory \"results\" cannot be opened!" << endl;
-      }
+        array[idx++] += tmp;
+        fin.close();
+    }
 
-      bool fileFound = false;
+    // Save the values on file
+    fout.open(resultsFile.string());
+    fout.precision(64);
 
-      for(unsigned int k=0;k<files.size();k++){
+    for (unsigned int i = 0; i < arraySize - 1; i++) {
+        fout << array[i];
+        fout << endl;
+    }
 
-          const char * f1 = (files[k]).c_str();
-          const char * f2 = fileID.c_str();
-          if (strcmp(f1,f2)==0){
+    fout << array[arraySize-1];
+    fout.close();
 
-              fileFound = true;
-              // Read current value
-              const char * fileName = (fileID).c_str();
-              const char * to_file = readFile(fileName);
-
-              fin.open(to_file);
-              fin.precision(64);
-              vector <string> fileValues;
-
-              while (!fin.eof())
-              {
-                char buf[1000];
-                fin.getline(buf,1000);
-                const char* token[1] = {};
-                token[0] = strtok(buf, "\n");
-                fileValues.push_back(token[0]);
-
-              }
-
-              fin.close();
-
-              // update values and write to file
-              fout.open(to_file);
-              const char * add_value;
-              for(int l=0;l<arraySize;l++){
-                  add_value = (fileValues[l]).c_str();
-                  fout.precision(64);
-                  if(l<arraySize-1)
-                      fout << (array[l]+atof(add_value)) << endl;
-                  else
-                      fout << (array[l]+atof(add_value));
-
-              }
-              fout.close();
-
-          }
-      }
-
-      // new file
-      if(fileFound==false){
-
-          // Read current value
-          const char * fileName = (fileID).c_str();
-          const char * to_file = readFile(fileName);
-
-          // write new file
-          fout.open(to_file);
-          for(int l=0;l<arraySize;l++){
-              fout.precision(64);
-              if(l<arraySize-1)
-                  fout << array[l] << endl;
-              else
-                  fout << array[l];
-          }
-          fout.close();
-
-      }
 }

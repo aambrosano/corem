@@ -1,26 +1,27 @@
+#define BOOST_PYTHON_STATIC_LIB
 #include <boost/python.hpp>
-#include "PythonRetina.h"
-#include "InterfaceNESTWrapper.h"
+#include "RetinaLoader.h"
+#include "RetinaWrapper.h"
 
 namespace py = boost::python;
 
 BOOST_PYTHON_MODULE(pyretina)
 {
-    py::class_<PythonRetina>("Retina", py::init<Retina&, DisplayManager&>())
-        .def("TempStep", &PythonRetina::TempStep)
-        .def("SimTime", &PythonRetina::SimTime)
-        .def("NumTrials", &PythonRetina::NumTrials)
-        .def("PixelsPerDegree", &PythonRetina::PixelsPerDegree)
-        .def("NRepetitions", &PythonRetina::NRepetitions)
-        .def("DisplayDelay", &PythonRetina::DisplayDelay)
-        .def("DisplayZoom", &PythonRetina::DisplayZoom)
-        .def("DisplayWindows", &PythonRetina::DisplayWindows)
-        .def("Input", &PythonRetina::Input)
-        .def("Create", &PythonRetina::Create)
-        .def("Connect", &PythonRetina::Connect)
-        .def("Show", &PythonRetina::Show)
-        .def("Multimeter", &PythonRetina::Multimeter);
-    py::class_<InterfaceNESTWrapper>("InterfaceNEST", py::init<std::string>())
-        .def("update", &InterfaceNESTWrapper::update)
-        .def("getValue", &InterfaceNESTWrapper::getValue);
+    py::class_<RetinaLoader>("RetinaLoader", py::init<Retina&>())
+        .def("TempStep", &RetinaLoader::TempStep)
+        .def("SimTime", &RetinaLoader::SimTime)
+        .def("NumTrials", &RetinaLoader::NumTrials)
+        .def("PixelsPerDegree", &RetinaLoader::PixelsPerDegree)
+        .def("NRepetitions", &RetinaLoader::NRepetitions)
+        .def("DisplayDelay", &RetinaLoader::DisplayDelay)
+        .def("DisplayZoom", &RetinaLoader::DisplayZoom)
+        .def("DisplayWindows", &RetinaLoader::DisplayWindows)
+        .def("Input", &RetinaLoader::Input)
+        .def("Create", &RetinaLoader::Create)
+        .def("Connect", &RetinaLoader::Connect)
+        .def("Show", &RetinaLoader::Show)
+        .def("Multimeter", &RetinaLoader::Multimeter);
+    py::class_<RetinaWrapper>("Retina", py::init<std::string>())
+        .def("update", &RetinaWrapper::update)
+        .def("getValue", &RetinaWrapper::getValue);
 }

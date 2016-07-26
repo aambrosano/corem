@@ -27,7 +27,7 @@
 using namespace cimg_library;
 using namespace std;
 
-class SingleCompartment:public module{
+class EXPORT SingleCompartment:public module{
 protected:
     // image buffers
     CImg<double>** conductances;
@@ -49,8 +49,8 @@ public:
 
     // Allocate values and set protected parameters
     virtual void allocateValues();
-    virtual void setX(int x){sizeX=x;}
-    virtual void setY(int y){sizeY=y;}
+    virtual void setX(int x){columns_=x;}
+    virtual void setY(int y){rows_=y;}
 
     void set_Cm(double capacitance);
     void set_Rm(double resistance);

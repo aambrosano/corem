@@ -1,8 +1,8 @@
 #include "StaticNonLinearity.h"
 
 StaticNonLinearity::StaticNonLinearity(int x, int y, double temporal_step, int t){
-    sizeX = x;
-    sizeY = y;
+    columns_ = x;
+    rows_ = y;
     step = temporal_step;
 
     type = t;
@@ -37,9 +37,9 @@ void StaticNonLinearity::setType(int t){
 //------------------------------------------------------------------------------//
 
 void StaticNonLinearity::allocateValues(){
-    inputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    outputImage=new CImg<double> (sizeY,sizeX,1,1,0.0);
-    markers=new CImg<double> (sizeY,sizeX,1,1,0.0);
+    inputImage =    new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    outputImage =   new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    markers =       new CImg<double> (columns_, rows_, 1, 1, 0.0);
 
 }
 

@@ -1,8 +1,8 @@
 #include "DisplayManager.h"
 
-DisplayManager::DisplayManager(int x, int y){
-    sizeX = x;
-    sizeY = y;
+DisplayManager::DisplayManager(int x, int y) {
+    columns_ = x;
+    rows_ = y;
     last_row=0;
     last_col=0;
     imagesPerRow=0;
@@ -15,14 +15,14 @@ DisplayManager::DisplayManager(int x, int y){
 
 }
 
-void DisplayManager::setLNFile(const char *file, double ampl){
+void DisplayManager::setLNFile(const string &file, double ampl) {
     LNFile = file;
     LNfactor = ampl;
 }
 
-void DisplayManager::reset(){
-    sizeX = 1;
-    sizeY = 1;
+void DisplayManager::reset() {
+    columns_ = 1;
+    rows_ = 1;
     last_row=0;
     last_col=0;
     imagesPerRow=0;
@@ -37,20 +37,20 @@ void DisplayManager::reset(){
 
 //------------------------------------------------------------------------------//
 
-void DisplayManager::allocateValues(int number, double tstep){
+void DisplayManager::allocateValues(int number, double tstep) {
 
     if(valuesAllocated == false){
 
         simStep = tstep;
         numberModules = number;
 
-        // security check
-        #if IS_THERE_X11
-        if (displayZoom*(double)sizeY >= CImgDisplay::screen_width()/4){
-            displayZoom = CImgDisplay::screen_width()/(4.0*(double)sizeY);
+#if cimg_display != 0 // Zoom factor has no meaning in case of no display
+        // Readjusting zoom factor in case of oversizing
+        if (displayZoom*(double)columns_ >= CImgDisplay::screen_width()/4){
+            displayZoom = CImgDisplay::screen_width()/(4.0*(double)columns_);
             cout << "zoom has been readjusted to "<< displayZoom << endl;
         }
-        #endif
+#endif
 
         for(int k=0;k<numberModules;k++){
             isShown.push_back(false);
@@ -68,21 +68,19 @@ void DisplayManager::allocateValues(int number, double tstep){
 //------------------------------------------------------------------------------//
 
 
-void DisplayManager::setX(int x){
-    sizeX = x;
+void DisplayManager::setColumns(int columns) {
+    columns_ = columns;
 }
 
-void DisplayManager::setY(int y){
-    sizeY = y;
-
+void DisplayManager::setRows(int rows) {
+    rows_ = rows;
 }
 
-void DisplayManager::setZoom(double zoom){
+void DisplayManager::setZoom(double zoom) {
     displayZoom = zoom;
-
 }
 
-void DisplayManager::setDelay(int displayDelay){
+void DisplayManager::setDelay(int displayDelay) {
     delay = displayDelay;
 }
 
@@ -108,248 +106,122 @@ void DisplayManager::setSimStep(double value){
 
 //------------------------------------------------------------------------------//
 
-
-void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2,bool temporalSpatial, string Show){
-
-    multimeter* nm= new multimeter(sizeX,sizeY);
+void DisplayManager::addMultimeter(string multimeterID, string moduleID, vector<int> &aux, MultimeterType mtype, bool shown) {
+    cout << "Adding a multimeter (" << multimeterID << ") of type " << mtype << endl;
+    multimeter* nm = new multimeter(columns_, rows_);
     nm->setSimStep(simStep);
-    multimeters.push_back(nm);
 
+    multimeters.push_back(nm);
     multimeterIDs.push_back(multimeterID);
     moduleIDs.push_back(moduleID);
-    vector <int> aux;
-    aux.push_back(param1);
-    aux.push_back(param2);
     multimeterParam.push_back(aux);
-
-    if(temporalSpatial)
-        multimeterType.push_back(0);
-    else
-        multimeterType.push_back(1);
-
-    const char * ShowChar = (Show).c_str();
-    if(strcmp(ShowChar, "False") == 0)
-        isShown.push_back(false);
-    else
-        isShown.push_back(true);
-
+    multimeterType.push_back(mtype);
+    isShown.push_back(shown);
 }
 
-void DisplayManager::addMultimeterLN(string multimeterID, string moduleID, int x, int y, double segment, double interval, double start, double stop, string Show){
+void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2,bool temporalSpatial, string Show) {
+    vector<int> aux{param1, param2};
 
-    multimeter* nm= new multimeter(sizeX,sizeY);
-    nm->setSimStep(simStep);
-    multimeters.push_back(nm);
+    MultimeterType mtype;
+    if(temporalSpatial) {
+        mtype = Temporal;
+    } else {
+        mtype = Spatial;
+    }
 
-    multimeterIDs.push_back(multimeterID);
-    moduleIDs.push_back(moduleID);
-    vector <int> aux;
-    aux.push_back(x);
-    aux.push_back(y);
-    multimeterParam.push_back(aux);
+    cout << "temporalSpatial: " << temporalSpatial << " mtype: " << mtype << endl;
+
+    addMultimeter(multimeterID, moduleID, aux, mtype, Show == "True");
+}
+
+void DisplayManager::addMultimeterLN(string multimeterID, string moduleID, int x, int y, double segment, double interval, double start, double stop, string Show) {
+    vector<int> aux{x, y};
 
     LNSegment.push_back(segment);
     LNInterval.push_back(interval);
     LNStart.push_back(start);
     LNStop.push_back(stop);
 
-    multimeterType.push_back(2);
-
-    const char * ShowChar = (Show).c_str();
-    if(strcmp(ShowChar, "False") == 0)
-        isShown.push_back(false);
-    else
-        isShown.push_back(true);
+    addMultimeter(multimeterID, moduleID, aux, LinearNonLinear, Show == "True");
 }
 
-void DisplayManager::modifyLN(string moduleID, double start, double stop){
-
-    int pos = 0;
-    const char * str1 = moduleID.c_str();
-
-    for (unsigned int k=0;k<multimeterIDs.size();k++){
-        const char * str2 = (multimeterIDs[k]).c_str();
-        if(strcmp(str1,str2)==0){
-            pos = k;
-            break;
+void DisplayManager::modifyLN(string moduleID, double start, double stop) {
+    for (unsigned int k = 0; k < multimeterIDs.size(); k++) {
+        if (moduleID == multimeterIDs[k]) {
+            LNStart[k] = start;
+            LNStop[k] = stop;
+            return;
         }
     }
-
-    LNStart[pos] = start;
-    LNStop[pos] = stop;
-
 }
 
 //------------------------------------------------------------------------------//
 
-void DisplayManager::addModule(int pos,string ID){
 
-    cout << "addModule " << pos << " " << ID << endl;
+void DisplayManager::addDisplay(int pos, string ID) {
+#if cimg_display != 0
+    cout << "addDisplay " << pos << " " << ID << endl;
 
-    // Input
-    if(displays.size()==0){
+    // black image
+    double newX = (double)columns_ * displayZoom;
+    double newY = (double)rows_ * displayZoom;
 
-        // black image
-        double newX = (double)sizeX * displayZoom;
-        double newY = (double)sizeY * displayZoom;
-        CImg <double> *image = new CImg <double>((int)newY,(int)newX,1,1,0.0);
-
+    // Adding Input
+    if (displays.size() == 0) {
         // create input display
-        if(isShown[0]){
-            CImgDisplay *input = new CImgDisplay(*image,"Input",0);
-            input->move(0,0);
-            displays.push_back(input);
-            inputImage = new CImg <double>(sizeY,sizeX,1,1,0.0);
-        }else{
-            displays.push_back(new CImgDisplay());
-        }
+        DisplayWithBar* inputDisplay = new DisplayWithBar("Input", newX, newY, false, 50, true);
+        inputDisplay->move(0, 0);
+        inputDisplay->setMargin(margin[0]);
 
-        // initialize intermediate images
-        intermediateImages = new CImg<double>*[numberModules-1];
-        for (int i=0;i<numberModules-1;i++){
-          intermediateImages[i]=new CImg<double> (sizeY,sizeX,1,1,0.0);
-        }
+        displays.push_back(inputDisplay);
+
+        if (!isShown[0]) inputDisplay->hide();
 
     }
 
-    if(isShown[pos]){
+    DisplayWithBar* dwb = new DisplayWithBar(ID, newX, newY);
+    dwb->setMargin(margin[pos]);
 
-        // black image
-        double newX = (double)sizeX * displayZoom;
-        double newY = (double)sizeY * displayZoom;
-        CImg <double> *image = new CImg <double>((int)newY,(int)newX,1,1,0.0);
-
-        // Color Bar
-        CImg <double> *bar = new CImg <double>(50,(int)newX, 1, 1);
-        cimg_forXY(*(bar),x,y) {
-            (*bar)(x,(int)newX-y-1,0,0)=255*((double)y/newX);
-        }
-        bar->map(CImg<double>::jet_LUT256());
-
-        // Create window
-        const char * WindowName = (ID).c_str();
-        CImgDisplay *disp = new CImgDisplay((*image,*bar),WindowName,0);
-        // Display
-        (*image,*bar).display(*disp);
-
-        #if IS_THERE_X11
+    if (isShown[pos]) {
         // new row of the display
         int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
 
-        if (last_col<capacity && last_col < imagesPerRow){
+        if (last_col < capacity && last_col < imagesPerRow){
             last_col++;
-        }else{
+        } else {
             last_col = 1;
             last_row++;
         }
 
         // move display
-        disp->move((int)last_col*(newY+80.0),(int)last_row*(newX+80.0));
-        #endif
-
-        // Save display
-        displays.push_back(disp);
-    }else{
-        displays.push_back(new CImgDisplay());
+        dwb->move((int)last_col*(newY+80.0),(int)last_row*(newX+80.0));
+    } else {
+        dwb->hide();
     }
 
-
-
+    // Save display
+    displays.push_back(dwb);
+#endif
 }
 
 //------------------------------------------------------------------------------//
 
 
-void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int step, double totalSimTime, double numberTrials,double totalNumberTrials){
-
-    double newX = (double)sizeX * displayZoom;
-    double newY = (double)sizeY * displayZoom;
-
-    double max = 0.0, min = 0.0;
-    const unsigned char color[] = {255, 255, 255};
-
-
+void DisplayManager::updateDisplay(CImg <double> *input, vector<module *> &modules, double switchTime,
+                                   int simCurrTime, double simDuration, double numberTrials, double totalNumberTrials) {
+#if cimg_display != 0
+    double scaledCols = (double)columns_ * displayZoom;
+    double scaledRows = (double)rows_ * displayZoom;
 
     // Display input
-    if(isShown[0]){
-        CImgDisplay *d0 = displays[0];
-        *inputImage = *input;
-
-        // find maximum and minimum values
-        min = findMin(inputImage);
-        max = findMax(inputImage);
-
-        // This is ok for custom images
-        inputImage->display(*d0);
-
-        // This was not
-        /* inputImage->crop(margin[0],margin[0],0,0,sizeY-margin[0]-1,sizeX-margin[0]-1,0,0,false);
-        (((255*(*inputImage - min)/(max-min))).resize((int)newY,(int)newX)).display(*d0);*/
-    }
-
-    // Update windows
-    if (step==0){
-        bars = new CImg<double>*[numberModules-1];
-        templateBar = new CImg <double>(50,(int)newX, 1, 1);
-        for(int i=0;i<numberModules-1;i++){
-            bars[i] = new CImg <double>(50,(int)newX, 1, 1);
-        }
-    }
-
-
-    //  copy interm. images
-    for(int i=0;i<numberModules-1;i++){
-        module* m = retina.getModule(i+1);
-        *intermediateImages[i]= (*m->getOutput());
+    if (isShown[0]) {
+        displays[0]->update(input);
     }
 
     // show modules
-    for(int k=0;k<numberModules-1;k++){
-        if(isShown[k+1]){
-
-            CImgDisplay *d = displays[k+1];
-
-            // Color Bar
-            *bars[k]=*templateBar;
-            cimg_forXY(*(bars[k]),x,y) {
-                (*bars[k])(x,(int)newX-y-1,0,0)=255*((double)y/newX);
-            }
-            bars[k]->map(CImg<double>::jet_LUT256());
-
-
-            // find maximum and minimum values
-            min = findMin(intermediateImages[k]);
-            max = findMax(intermediateImages[k]);
-
-            // draw them
-            std::ostringstream strs1,strs2;
-
-            if(abs(min)<100)
-                strs1 << min;
-            else
-                strs1 << (int)min;
-
-            string str1 = strs1.str();
-            const char * min_value_text = (str1.substr(0,4)).c_str();
-
-            bars[k]->draw_text(0,bars[k]->height()-20,min_value_text,color,0,1,20);
-
-            if(abs(max)<100)
-                strs2 << max;
-            else
-                strs2 << (int)max;
-
-
-            string str2 = strs2.str();
-            const char * max_value_text = (str2.substr(0,4)).c_str();
-
-            bars[k]->draw_text(0,10,max_value_text,color,0,1,20);
-
-            // show image
-            intermediateImages[k]->crop(margin[k+1],margin[k+1],0,0,sizeY-margin[k+1]-1,sizeX-margin[k+1]-1,0,0,false);
-            (((255*(*intermediateImages[k] - min)/(max-min))).map(CImg<double>::jet_LUT256()).resize((int)newY,(int)newX),*bars[k]).display(*d);
-
-
+    for (int k=0; k < numberModules - 1; k++) {
+        if (isShown[k+1]) {
+            displays[k+1]->update(modules[k+1]->getOutput());
         }
     }
 
@@ -357,38 +229,35 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     for (unsigned int i = 0; i < multimeters.size(); i++){
         multimeter *m = multimeters[i];
         module *n = nullptr;
-        const char * moduleID = (moduleIDs[i]).c_str();
         // find target module
-        if(strcmp(moduleID, "Input") != 0){
-            for(int j = 1; j < retina.getNumberModules(); j++){
-                n = retina.getModule(j);
-                if(n->checkID(moduleID)){
+        if(moduleIDs[i] != "Input") {
+            for(unsigned int j = 1; j < modules.size(); j++){
+                n = modules[j];
+                if(n->checkID(moduleIDs[i])){
                     break;
                 }
             }
         }
 
-
         // temporal and LN mult.
-        if(multimeterType[i]==0 || multimeterType[i]==2){
-            vector <int> aux = multimeterParam[i];
+        if(multimeterType[i] == Temporal || multimeterType[i] == LinearNonLinear) {
+            vector<int> aux = multimeterParam[i];
 
-            if(strcmp(moduleID, "Input") == 0){
-                m->recordValue((*input)(aux[0],aux[1],0,0));
-            }else{
-                m->recordValue((*n->getOutput())(aux[0],aux[1],0,0));
+            if(moduleIDs[i] == "Input") {
+                m->recordValue((*input)(aux[0], aux[1], 0, 0));
+            } else {
+                m->recordValue((*n->getOutput())(aux[0], aux[1], 0, 0));
             }
 
-            m->recordInput((*input)(aux[0],aux[1],0,0));
+            m->recordInput((*input)(aux[0], aux[1], 0, 0));
         }
         // spatial mult.
-        else if(multimeterType[i]==1){
+        else if(multimeterType[i] == Spatial) {
             vector <int> aux = multimeterParam[i];
-            if(step == aux[1]){
+            if(simCurrTime == aux[1]) {
 
                 // set position
-                #if IS_THERE_X11
-                int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
+                int capacity = int((CImgDisplay::screen_width()-scaledCols-100) / (scaledCols+50));
 
                 if (last_col<capacity && last_col < imagesPerRow){
                     last_col++;
@@ -396,22 +265,21 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                     last_col = 1;
                     last_row++;
                 }
-                #endif
 
-                if(isShown[numberModules+i]==true){
+                if (isShown[numberModules+i]) {
 
-                    if(strcmp(moduleID, "Input") == 0){
+                    if (moduleIDs[i] == "Input") {
 
                         if(aux[0]>0)
-                            m->showSpatialProfile((*input),true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                            m->showSpatialProfile((*input),true,aux[0],multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-1);
                         else
-                            m->showSpatialProfile((*input),false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                            m->showSpatialProfile((*input),false,-aux[0],multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-1);
 
                     }else{
                         if(aux[0]>0)
-                            m->showSpatialProfile((*n->getOutput()),true,aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                            m->showSpatialProfile((*n->getOutput()),true,aux[0],multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-1);
                         else
-                            m->showSpatialProfile((*n->getOutput()),false,-aux[0],multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1);
+                            m->showSpatialProfile((*n->getOutput()),false,-aux[0],multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-1);
 
                     }
                 }
@@ -421,16 +289,15 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     }
 
     // display temporal and LN multimeters for the last simulation step
-    if (step == totalSimTime - simStep) {
+    if (simCurrTime == simDuration - simStep) {
 
         int LNMultimeters = 0;
         for (unsigned int i = 0; i < multimeters.size(); i++) {
             multimeter *m = multimeters[i];
 
             // set position
-            #if IS_THERE_X11
-            if(multimeterType[i]==0 || multimeterType[i]==2){
-                int capacity = int((CImgDisplay::screen_width()-newY-100) / (newY+50));
+            if(multimeterType[i] == Temporal || multimeterType[i] == LinearNonLinear){
+                int capacity = int((CImgDisplay::screen_width()-scaledCols-100) / (scaledCols+50));
 
                 if (last_col<capacity && last_col < imagesPerRow){
                     last_col++;
@@ -439,41 +306,36 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
                     last_row++;
                 }
             }
-            #endif
 
-            // temporal mult.
-            if(multimeterType[i]==0){
+            if(multimeterType[i] == Temporal){
 
                 if(isShown[numberModules+i]==true){
                     if (i<multimeters.size()-1)
-                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),delay,LNFile);
+                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),delay,LNFile);
                     else
-                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,LNFile);
+                        m->showTemporalProfile(multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-1,LNFile);
 
                 }else{
-                    m->showTemporalProfile(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNFile);
+                    m->showTemporalProfile(multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-2,LNFile);
                 }
-
-            // LN mult.
-            }else if(multimeterType[i]==2){
-                if(isShown[numberModules+i]==false){
-                    m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
-                }else{
-                    if (i<multimeters.size()-1)
-                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),delay,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
+            } else if(multimeterType[i] == LinearNonLinear) {
+                if (isShown[numberModules+i] == false) {
+                    m->showLNAnalysis(multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-2,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
+                } else {
+                    if (i < multimeters.size() - 1)
+                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),delay,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
                     else
-                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-1,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
+                        m->showLNAnalysis(multimeterIDs[i],(int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-1,LNSegment[LNMultimeters]/simStep,LNInterval[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep,LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile);
                 }
-
 
                 // check last trial to show average results
 
-                if(numberTrials == totalNumberTrials-1){
-                    m->getSwitchTime(retina.getWhiteNoise()->getSwitchTime());
-                    if(isShown[numberModules+i]==false){
-                        m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),-2,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile,LNfactor);
+                if(numberTrials == totalNumberTrials-1) {
+                    m->getSwitchTime(switchTime);
+                    if (isShown[numberModules+i] == false) {
+                        m->showLNAnalysisAvg((int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),-2,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile,LNfactor);
                     }else{
-                        m->showLNAnalysisAvg((int)last_col*(newY+80.0),(int)last_row*(newX+80.0),0,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile,LNfactor);
+                        m->showLNAnalysisAvg((int)last_col*(scaledRows+80.0),(int)last_row*(scaledCols+80.0),0,LNSegment[LNMultimeters]/simStep,LNStart[LNMultimeters]/simStep, LNStop[LNMultimeters]/simStep,totalNumberTrials,LNFile,LNfactor);
                     }
                 }
 
@@ -491,27 +353,7 @@ void DisplayManager::updateDisplay(CImg <double> *input, Retina &retina, int ste
     // Show displays if there's an input display
     if(isShown[0])
         displays[0]->wait(delay);
+#endif
 }
 
 //------------------------------------------------------------------------------//
-
-
-double DisplayManager::findMin(CImg<double> *input){
-    double min = DBL_INF;
-    cimg_forXY(*(input),x,y) {
-        if ((*input)(x,y,0,0) < min)
-            min =(*input)(x,y,0,0);
-    }
-
-    return min;
-}
-
-double DisplayManager::findMax(CImg<double> *input){
-    double max = -DBL_INF;
-    cimg_forXY(*(input),x,y) {
-        if ((*input)(x,y,0,0) > max)
-            max =(*input)(x,y,0,0);
-    }
-
-    return max;
-}

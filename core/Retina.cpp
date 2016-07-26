@@ -1,56 +1,64 @@
 #include "Retina.h"
 
-Retina::Retina(int x, int y, double temporal_step)
-: sizeX(x), sizeY(y), step(temporal_step) {
-    this->reset(x, y, temporal_step);
+Retina::Retina(int columns, int rows, double temporal_step)
+: columns_(columns), rows_(rows), simStep(temporal_step), displayMg(1, 1) {
+    this->reset(columns, rows, temporal_step);
 }
 
-void Retina::reset(int x, int y, double temporal_step) {
-    step = temporal_step;
-    sizeX = x;
-    sizeY = y;
+void Retina::reset(int columns, int rows, double temporal_step) {
+    simStep = temporal_step;
+    setColumns(columns);
+    setRows(rows);
     pixelsPerDegree = 1.0;
     inputType = 0;
     numberImages = 0;
     repetitions = 0;
 
-    verbose = false;
+    verbose = true;
 
     modules.clear();
-    modules.push_back((new module()));
+    modules.push_back((new module())); // This is the output module, I'll add it properly
 
-    output = new CImg <double>(sizeY,sizeX,1,1,0.0);
-    accumulator = *(new CImg <double>(sizeY,sizeX,1,1,0.0));
+    output = new CImg <double>(columns_, rows_, 1, 1, 0.0);
+    accumulator = *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
 
-    RGBred = *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    RGBgreen= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    RGBblue= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch1 = *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch2= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch3= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    rods= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    X_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    Y_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    Z_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
+    RGBred =    *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    RGBgreen =  *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    RGBblue =   *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    ch1 =       *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    ch2 =       *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    ch3 =       *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    rods =      *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    X_mat =     *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    Y_mat =     *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    Z_mat =     *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+
+    simCurrTime = 0;
+    WN = nullptr;
+    displayMg.reset();
 }
 
 //------------------------------------------------------------------------------//
 
-void Retina::setSizeX(int x) {
-    if (x > 0) {
-        sizeX = x;
+void Retina::setColumns(int columns) {
+    cout << "Retina::setColumns " << columns << endl;
+    if (columns > 0) {
+        columns_ = columns;
+        displayMg.setColumns(columns_);
     }
 }
 
-void Retina::setSizeY(int y) {
-    if (y > 0) {
-        sizeY = y;
+void Retina::setRows(int rows) {
+    cout << "Retina::setRows " << rows << endl;
+    if (rows > 0) {
+        rows_ = rows;
+        displayMg.setRows(rows_);
     }
 }
 
 void Retina::set_step(double temporal_step) {
     if (temporal_step>0){
-        step = temporal_step;
+        simStep = temporal_step;
     }
 }
 
@@ -62,16 +70,16 @@ double Retina::getPixelsPerDegree(){
     return pixelsPerDegree;
 }
 
-int Retina::getSizeX(){
-    return sizeX;
+int Retina::getColumns() {
+    return columns_;
 }
 
-int Retina::getSizeY(){
-    return sizeY;
+int Retina::getRows() {
+    return rows_;
 }
 
-double Retina::getStep(){
-    return step;
+double Retina::getSimStep() {
+    return simStep;
 }
 
 void Retina::setSimTotalRep(double r) {
@@ -82,8 +90,12 @@ void Retina::setSimCurrentRep(double r) {
     CurrentTrial = r;
 }
 
+void Retina::setSimTimeTot(int t) {
+    simDuration = t;
+}
+
 void Retina::setSimTime(int t) {
-    SimTime = t;
+    simCurrTime = t;
 }
 
 double Retina::getSimCurrentRep() {
@@ -94,8 +106,12 @@ double Retina::getSimTotalRep() {
     return totalNumberTrials;
 }
 
-int Retina::getSimTime() {
-    return SimTime;
+int Retina::getSimDuration() {
+    return simDuration;
+}
+
+int Retina::getSimCurrTime() {
+    return simCurrTime;
 }
 
 //------------------------------------------------------------------------------//
@@ -109,26 +125,27 @@ void Retina::setRepetitions(int r) {
 
 void Retina::allocateValues() {
     if(verbose)cout << "Allocating "<< (getNumberModules()-1) << " retinal modules." << endl;
-    if(verbose)cout << "sizeX = "<< sizeX << endl;
-    if(verbose)cout << "sizeY = "<< sizeY << endl;
-    if(verbose)cout << "Temporal step = "<< step << " ms" << endl;
-    output = new CImg <double>(sizeY,sizeX,1,1,0.0);
-    accumulator = *(new CImg <double>(sizeY,sizeX,1,1,0.0));
+    if(verbose)cout << "columns = "<< columns_ << endl;
+    if(verbose)cout << "rows = "<< rows_ << endl;
+    if(verbose)cout << "Temporal step = "<< simStep << " ms" << endl;
+    output = new CImg <double>(columns_, rows_, 1, 1, 0.0);
+    accumulator = *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
 
-    RGBred = *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    RGBgreen= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    RGBblue= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch1 = *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch2= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    ch3= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    rods= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    X_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    Y_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
-    Z_mat= *(new CImg <double>(sizeY,sizeX, 1, 1, 0.0));
+    RGBred =    *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    RGBgreen =  *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    RGBblue =   *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    ch1 =       *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    ch2 =       *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    ch3 =       *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    rods =      *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    X_mat =     *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    Y_mat =     *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
+    Z_mat =     *(new CImg <double>(columns_, rows_, 1, 1, 0.0));
 
     for (unsigned int i = 1; i < modules.size(); i++) {
         module* m = modules[i];
         m->allocateValues();
+        displayMg.addDisplay(i, m->getModuleID());
     }
 }
 
@@ -169,7 +186,7 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
 
     // To be kept until greyscale2rgb, xyz2lms and rgb2xyz are fully debugged
 
-    if ((uint)(input->size())==static_cast<uint>(sizeX*sizeY)) {
+    if ((unsigned int)(input->size())==static_cast<unsigned int>(columns_*rows_)) {
         // Separate color channels
         cimg_forXY(*input,x,y) {
             RGBred(x,y,0,0) = (*input)(x,y,0,0),    // Red component of image sent to imgR
@@ -212,30 +229,28 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
             vector <int> p = neuron->getOperation(o);
 
             //image input
-            const char * cellName = l[0].c_str();
+            string cellName = l[0];
 
-            if(strcmp(cellName,"L_cones")==0){
-                    // accumulator=rods.get_channel(2);
+            if (cellName == "L_cones") {
+                    // acc umulator=rods.get_channel(2);
                     accumulator=ch3;
-            }else if(strcmp(cellName,"M_cones")==0){
+            } else if (cellName == "M_cones") {
                     // accumulator=rods.get_channel(1);//ch2;
                     accumulator=ch2;
-            }else if(strcmp(cellName,"S_cones")==0){
+            } else if (cellName == "S_cones") {
                     // accumulator=rods.get_channel(0);//ch1;
                     accumulator=ch1;
-            }else if(strcmp(cellName,"rods")==0){
+            } else if (cellName == "rods") {
                     // accumulator=rods/3; // TODO: This is wrong. Should be the sum of channels / 3 (single channel image).
                     accumulator=rods;
-            }else{
+            } else {
 
             // other inputs rather than cones or rods
 
                 //search for the first image
                 for (unsigned int m = 1; m < modules.size(); m++) {
                     module* n = modules[m];
-                    const char * cellName1 = l[0].c_str();
-                    const char * cellName2 = (n->getModuleID()).c_str();
-                    if (strcmp(cellName1,cellName2)==0){
+                    if (l[0] == n->getModuleID()) {
                         accumulator = *(n->getOutput());
                         break;
                     }
@@ -246,10 +261,7 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
                 for (unsigned int k = 1; k < l.size(); k++) {
                     for (unsigned int m = 1; m < modules.size(); m++) {
                         module* n = modules[m];
-                        const char * cellName1 = l[k].c_str();
-                        const char * cellName2 = (n->getModuleID()).c_str();
-                        if (strcmp(cellName1,cellName2)==0){
-
+                        if (l[k] == n->getModuleID()) {
                            if (p[k-1]==0){
                                 accumulator += *(n->getOutput());
                             }else{
@@ -268,6 +280,8 @@ CImg<double> *Retina::feedInput(CImg<double>* input) {
                 neuron->feedInput(accumulator,false,o);
         }
     }
+
+    lastFedInput = *input;
     return input;
 }
 
@@ -279,7 +293,6 @@ CImg<double> *Retina::feedInput(int step){
     // Input selection
     switch(inputType){
     case 0:
-
         if (step/repetitions < numberImages)
             input = inputSeq[step/repetitions];
         else
@@ -315,7 +328,9 @@ CImg<double> *Retina::feedInput(int step){
         break;
     }
 
-    return this->feedInput(input);
+    input = this->feedInput(input);
+    lastFedInput = *(input);
+    return input;
 }
 
 
@@ -323,9 +338,17 @@ CImg<double> *Retina::feedInput(int step){
 
 void Retina::update(){
     for (unsigned int i = 1; i < modules.size(); i++) {
-        module* m = modules[i];
-        m->update();
+        modules[i]->update();
     }
+
+    double switchTime = 0;
+    // Updating the multimeter only in the last step
+    if (getWhiteNoise() != nullptr) {
+        switchTime = getWhiteNoise()->getSwitchTime();
+    }
+    displayMg.updateDisplay(&lastFedInput, modules, switchTime, simCurrTime,
+        simDuration, CurrentTrial, totalNumberTrials);
+    simCurrTime += simStep;
 }
 
 //------------------------------------------------------------------------------//
@@ -347,65 +370,35 @@ int Retina::getNumberModules(){
 //------------------------------------------------------------------------------//
 
 
-bool Retina::setInputSeq(string s){
+bool Retina::setInputSeq (string directory) {
+    vector<string> result;
 
-    bool valueToReturn = false;
-    const char * directory = s.c_str();
+    if (!fs::exists(directory) || !fs::is_directory(directory)) return false;
 
-    std::vector <std::string> result;
-    dirent* de;
-    DIR* dp=opendir (directory);
+    fs::directory_iterator end_iter;
+    for(fs::directory_iterator dir_iter(directory); dir_iter != end_iter; ++dir_iter) {
+        if (fs::is_regular_file(dir_iter->status())) {
+            result.push_back(dir_iter->path().string());
+        }
+    }
+    sort(begin(result), end(result));
 
-    if (dp){
-        while (true)
-          {
-              de = readdir( dp );
-              if (de == NULL) break;
-              result.push_back( std::string( de->d_name ) );
-              std::sort( result.begin(), result.end() );
-          }
+    CImg <double> image(result[0].c_str());
+    setColumns(image.height());
+    setRows(image.width());
 
-        closedir( dp );
-        valueToReturn = true;
+    numberImages = result.size();
+    inputSeq = new CImg<double>*[numberImages];
+
+    for (int i = 0; i < numberImages; i++) {
+        inputSeq[i] = new CImg <double>(columns_, rows_, 1, 3, true);
+        inputSeq[i]->assign(result[i].c_str());
     }
 
-      if (valueToReturn){
+    if(verbose) cout << numberImages << " images read from "<< directory << endl;
+    inputType = 0;
 
-          const char * ff = result[2].c_str();
-          const char* dir = directory;
-          char input_im_example[1000];
-          strcpy(input_im_example,dir);
-          strcat(input_im_example,ff);
-
-          CImg <double> image(input_im_example);
-          sizeX = image.height();
-          sizeY = image.width();
-
-          numberImages = result.size()-2;
-          inputSeq = new CImg<double>*[numberImages];
-
-          for (int i=0;i<numberImages;i++){
-                   inputSeq[i]=new CImg <double>(sizeY,sizeX,1,3);
-          }
-
-          for(int i=0;i<numberImages;i++){
-              const char * file = result[i+2].c_str();
-              const char* dir = directory;
-              char input_im[1000];
-              strcpy(input_im,dir);
-              strcat(input_im,file);
-
-              CImg <double> image(input_im);
-              *(inputSeq[i])=image;
-
-          }
-
-          if(verbose)cout << numberImages << " images read from "<< directory << endl;
-          inputType = 0;
-
-      }
-
-    return valueToReturn;
+    return true;
 }
 
 //------------------------------------------------------------------------------//
@@ -418,69 +411,61 @@ int Retina::getNumberImages(){
 //------------------------------------------------------------------------------//
 
 
-bool Retina::connect(vector <string> from, const char *to,vector <int> operations,const char *type_synapse){
+bool Retina::connect(vector <string> from, string to, vector <int> operations, string type_synapse) {
+    // valueToReturn is true if all the "from" modules are found
     bool valueToReturn = false;
 
     module* neuronto;
 
-            if (strcmp(to,"Output")==0){
-                neuronto = modules[0];
-                neuronto->addID(from);
-                neuronto->addOperation(operations);
+    if (to == "Output") {
+        neuronto = modules[0];
+        neuronto->addSourceIDs(from);
+        neuronto->addOperation(operations);
+        valueToReturn = true;
+    } else {
+        // Looking for the destination module
+        for (unsigned int i = 1; i < modules.size() && !valueToReturn; i++){
+            if (modules[i]->checkID(to)) {
+                neuronto = modules[i];
                 valueToReturn = true;
+            }
+        }
 
-                if(verbose)cout << from[0] << " has been added to the output buffer." << endl;
+        // The destination module was not found
+        if (!valueToReturn) return valueToReturn;
 
-            } else {
-                for (unsigned int i = 1; i < modules.size(); i++){
-                    neuronto = modules[i];
-                    if (neuronto->checkID(to)) {
+        // Iterate through source modules and look if all of them are existing
+        for (const string &ff: from) {
 
-                        // check from
-                        for (unsigned int j = 0; j < from.size(); j++) {
-                            unsigned int k;
-                            const char * ff = from[j].c_str();
-                            if (strcmp(ff,"rods")!=0 && strcmp(ff,"L_cones")!=0 && strcmp(ff,"M_cones")!=0 && strcmp(ff,"S_cones")!=0){
-                                for (k=1;k<modules.size();k++){
-                                    module* neuronfrom = modules[k];
-                                    if (neuronfrom->checkID(ff)){
-                                        valueToReturn = true;
-                                        if(verbose)cout << neuronfrom->getModuleID() << " has been conected to "<< neuronto->getModuleID() << endl;
-                                        break;
-                                    }
+            // These modules are embedded
+            if (ff == "rods" || ff == "L_cones" || ff == "M_cones" || ff == "S_cones") { continue; }
 
-                                }
-                                if (k==modules.size()){
-                                    valueToReturn=false;
-                                    break;
-                                }
-                            }else{
-                                valueToReturn = true;
-                                break;
-                            }
-                        }
-
-
-                        if (valueToReturn){
-                            neuronto->addID(from);
-                            neuronto->addOperation(operations);
-
-                            int typeSyn = 0;
-
-                            if(strcmp(type_synapse,"Current")==0){
-                                typeSyn = 0;
-                            }else if(strcmp(type_synapse,"Conductance")==0){
-                                typeSyn = 1;
-                            }else{
-                                valueToReturn = false;
-                            }
-
-                            neuronto->addTypeSynapse(typeSyn);
-                        }
-                        break;
-                    }
+            valueToReturn = false;
+            for (unsigned int k = 1; k < modules.size() && !valueToReturn; k++) {
+                if (modules[k]->checkID(ff)) {
+                    valueToReturn = true;
+                    if(verbose) cout << modules[k]->getModuleID() << " has been conected to "<< neuronto->getModuleID() << endl;
                 }
             }
+        }
+
+        // Some of the source modules were not found
+        if (!valueToReturn) return valueToReturn;
+
+        neuronto->addSourceIDs(from);
+        neuronto->addOperation(operations);
+
+        int typeSyn = 0;
+
+        if (type_synapse == "Current") {
+            typeSyn = 0;
+        } else if (type_synapse == "Conductance") {
+            typeSyn = 1;
+        } else {
+            valueToReturn = false;
+        }
+        neuronto->addTypeSynapse(typeSyn);
+    }
 
     return valueToReturn;
 }
@@ -488,13 +473,14 @@ bool Retina::connect(vector <string> from, const char *to,vector <int> operation
 
 //------------------------------------------------------------------------------//
 
-bool Retina::generateGrating(int type,double step,double lengthB,double length,double length2,int X,int Y,double freq,double T,double Lum,double Cont,double phi,double phi_t,double theta,double red, double green, double blue,double red_phi, double green_phi,double blue_phi){
+bool Retina::generateGrating(int type, double step, double lengthB, double length, double length2, int X, int Y, double freq, double T, double Lum, double Cont, double phi, double phi_t, double theta, double red, double green, double blue, double red_phi, double green_phi, double blue_phi) {
 
     bool valueToReturn = false;
 
     g = new GratingGenerator(type, step, lengthB, length, length2, X, Y, freq, T, Lum, Cont, phi, phi_t, theta,red,green,blue,red_phi, green_phi,blue_phi);
-    sizeX = X;
-    sizeY = Y;
+
+    setColumns(X);
+    setRows(Y);
     valueToReturn=true;
 
     inputType = 1;
@@ -509,15 +495,15 @@ CImg <double>* Retina::updateGrating(double t){
 //------------------------------------------------------------------------------//
 
 
-bool Retina::generateWhiteNoise(double mean, double contrast1,double contrast2, double period, double switchT,int X, int Y){
+bool Retina::generateWhiteNoise(double mean, double contrast1,double contrast2, double period, double switchT,int X, int Y) {
 
     bool valueToReturn = false;
 
     WN = new whiteNoise(mean,contrast1,contrast2,period,switchT,X,Y);
     WN->initializeDist(CurrentTrial);
 
-    sizeX = X;
-    sizeY = Y;
+    setColumns(X);
+    setRows(Y);
     valueToReturn=true;
 
     inputType = 2;
@@ -537,14 +523,15 @@ whiteNoise* Retina::getWhiteNoise(){
 //------------------------------------------------------------------------------//
 
 
-bool Retina::generateImpulse(double start, double stop, double amplitude,double offset, int X, int Y){
+bool Retina::generateImpulse(double start, double stop, double amplitude,double offset, int X, int Y) {
 
     bool valueToReturn = false;
 
     imp = new impulse(start,stop,amplitude,offset,X,Y);
 
-    sizeX = X;
-    sizeY = Y;
+    setColumns(X);
+    setRows(Y);
+
     valueToReturn=true;
 
     inputType = 3;
@@ -558,14 +545,15 @@ CImg<double>* Retina::updateImpulse(double t){
 
 //------------------------------------------------------------------------------//
 
-bool Retina::generateFixationalMovGrating(int X, int Y, double radius, double jitter, double period, double step, double luminance, double contrast, double orientation, double red_weight, double green_weigh, double blue_weight, int type1, int type2, int ts){
+bool Retina::generateFixationalMovGrating(int X, int Y, double radius, double jitter, double period, double step, double luminance, double contrast, double orientation, double red_weight, double green_weigh, double blue_weight, int type1, int type2, int ts) {
 
     bool valueToReturn = false;
 
-    fg = new fixationalMovGrating(X,Y,radius, jitter, period, step, luminance, contrast, orientation, red_weight, green_weigh, blue_weight, type1, type2, ts);
+    fg = new fixationalMovGrating(X, Y, radius, jitter, period, step, luminance, contrast, orientation, red_weight, green_weigh, blue_weight, type1, type2, ts);
 
-    sizeX = X;
-    sizeY = Y;
+    setColumns(X);
+    setRows(Y);
+
     valueToReturn=true;
 
     inputType = 4;
@@ -577,7 +565,7 @@ CImg <double>* Retina::updateFixGrating(double t){
     return fg->compute_grating(t);
 }
 
-void Retina::loadCircuit(std::string retinaPath, DisplayManager& displayMg) {
+void Retina::loadCircuit(std::string retinaPath) {
 
     if (!fs::exists(retinaPath)) {
         cout << "Wrong retina file path." << endl;
@@ -591,7 +579,7 @@ void Retina::loadCircuit(std::string retinaPath, DisplayManager& displayMg) {
     try {
         auto py__main__ = py::import("__main__");
         auto pyretina = py::import("pyretina");
-        PythonRetina* pr = new PythonRetina(*this, displayMg);
+        RetinaLoader* pr = new RetinaLoader(*this);
         py__main__.attr("retina") = py::ptr(pr);
         PyRun_SimpleString(contents.c_str());
     } catch(py::error_already_set const &) {
@@ -613,4 +601,24 @@ void Retina::loadCircuit(std::string retinaPath, DisplayManager& displayMg) {
         std::cout << exception_msg << std::endl;
         throw std::runtime_error("The retina configuration couldn't be loaded");
     }
+}
+
+double Retina::getValue(int cell, string layer) {
+    int select_image = cell/(columns_*rows_);
+    int pos_im = cell - select_image*(columns_*rows_);
+
+    int row = pos_im / rows_;
+    int col = pos_im % rows_;
+
+    if (layer == "Output") {
+        layer = modules[0]->getID(0)[0];
+    }
+
+    for (module* &m : modules) {
+        if (m->getModuleID() == layer) {
+            return (*m->getOutput())(col, row, 0, 0);
+        }
+    }
+
+    throw std::runtime_error("Invalid layer");
 }
