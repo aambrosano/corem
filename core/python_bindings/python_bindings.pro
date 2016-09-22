@@ -6,10 +6,10 @@ TEMPLATE = lib
 INCLUDEPATH += ../../core/
 
 unix {
-    TARGET = pyretina
-
     # Avoids the creation of libpyretina.so instead of pyretina.so
-    CONFIG += no_plugin_name_prefix
+    CONFIG += plugin no_plugin_name_prefix
+
+    TARGET = pyretina
 
     QMAKE_CXXFLAGS += -fPIC
     QMAKE_LFLAGS += -shared -Wl,-rpath,\'\$$ORIGIN\'
