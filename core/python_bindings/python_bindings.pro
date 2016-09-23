@@ -6,15 +6,18 @@ TEMPLATE = lib
 INCLUDEPATH += ../../core/
 
 unix {
+    TARGET = pyretina
+
     # Avoids the creation of libpyretina.so instead of pyretina.so
     CONFIG += plugin no_plugin_name_prefix
-
-    TARGET = pyretina
 
     QMAKE_CXXFLAGS += -fPIC
     QMAKE_LFLAGS += -shared -Wl,-rpath,\'\$$ORIGIN\'
 
     LIBS += -L../../lib -lretina
+
+    target.path = $$_INSTALL_PREFIX/lib
+    INSTALLS += target
 }
 
 win32 {
@@ -36,6 +39,8 @@ win32 {
     }
     LIBS += user32.lib gdi32.lib shell32.lib
 
+    dlltarget.path = $$_INSTALL_PREFIX/lib
+    INSTALLS += dlltarget
 }
 
 DESTDIR = ../../lib

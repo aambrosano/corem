@@ -35,6 +35,16 @@ win32 {
     _DEFAULT_BOOST_INCLUDEDIR = C:\Boost\include
 }
 
+# Try to use qmake variable's value.
+_INSTALL_PREFIX = $$INSTALL_PREFIX
+
+isEmpty(_INSTALL_PREFIX) {
+    message(\"INSTALL_PREFIX\" qmake value not detected)
+
+    # Try to use the system environment value.
+    _INSTALL_PREFIX = $$(INSTALL_PREFIX)
+}
+
 # Try to use the system environment value.
 _BOOST_INCLUDEDIR = $$(BOOST_INCLUDEDIR)
 

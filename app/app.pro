@@ -8,7 +8,6 @@ INCLUDEPATH += ../core
 
 unix {
     QMAKE_LFLAGS += -Wl,-rpath,\'\$$ORIGIN/../lib\'
-
     LIBS += -lX11 -L../lib/ -lretina -lboost_python -lboost_filesystem -lboost_system -lpthread -fopenmp
 }
 win32 {
@@ -18,5 +17,8 @@ win32 {
 }
 
 TARGET = COREM
+
+target.path = $$_INSTALL_PREFIX/bin
+INSTALLS += target
 
 SOURCES = main.cpp

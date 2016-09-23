@@ -1,9 +1,3 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2014-11-28T10:52:33
-#
-#-------------------------------------------------
-
 include(../retina.pri)
 
 TEMPLATE = lib
@@ -18,6 +12,9 @@ unix {
     QMAKE_LFLAGS += -shared
     LIBS += -lX11 -lpthread -fopenmp
     LIBS += -lboost_python -lboost_filesystem -lboost_system
+
+    target.path += $$_INSTALL_PREFIX/lib
+    INSTALLS += target
 }
 win32 {
     TARGET = retina
@@ -34,7 +31,11 @@ win32 {
     } else {
         LIBS += boost_python-vc120-mt-1_61.lib
     }
+
+    dlltarget.path += $$_INSTALL_PREFIX/lib
+    INSTALLS += dlltarget
 }
+
 
 SOURCES = GaussFilter.cpp \
     multimeter.cpp \
