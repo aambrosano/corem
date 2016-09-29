@@ -5,6 +5,6 @@ QT -= gui
 
 CONFIG += ordered
 
-SUBDIRS = core \
-          core/python_bindings \
-          app
+SUBDIRS = src/core \
+          src/python_bindings \
+          src/app
