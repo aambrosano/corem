@@ -1,5 +1,5 @@
-#ifndef GAUSSFILTER_H
-#define GAUSSFILTER_H
+#ifndef COREM_GAUSSFILTER_H
+#define COREM_GAUSSFILTER_H
 
 /* BeginDocumentation
  * Name: GaussFilter
@@ -26,66 +26,68 @@
  */
 
 #ifdef DEBUG
-#include <chrono>
+#include <boost/chrono.hpp>
+
+namespace bchrono = boost::chrono;
 #endif
 
+#include <CImg.h>
 #include <omp.h>
 #include "module.h"
 #include "constants.h"
 
-using namespace std;
-using namespace cimg_library;
-
-class EXPORT GaussFilter : public module {
-protected:
-    // Filter parameters
-    double sigma;
-    double* buffer;
-    double pixelsPerDegree;
-
-    // Deriche's coefficients
-    double q,b0,b1,b2,b3,B;
-    // Matrices
-    double M[3][3];
-    CImg <double> q_m,b0_m,b1_m,b2_m,b3_m,B_m,M_m;
-    //spaceVariantSigma
-    bool spaceVariantSigma;
-    double R0,K;
-
-    CImg<double> *inputImage;
-    CImg<double> *outputImage;
-
+class EXPORT GaussFilter: public Module {
 public:
+    GaussFilter(std::string id, unsigned int columns, unsigned int rows, double temporalStep,
+                std::map<std::string, double> parameters, double pixelsPerDegree);
+    GaussFilter(const GaussFilter &copy);
+    ~GaussFilter();
 
-    // Constructor, destructor.
-    GaussFilter(int x=1,int y=1, double ppd=1.0);
-    ~GaussFilter(void);
-
-    // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){columns_=x;}
-    virtual void setY(int y){rows_=y;}
-    void setSigma(double sigm);
+    virtual void update();
+    virtual CImg<double> *getOutput();
 
     // Fast filtering with constant sigma
     void gaussHorizontal(CImg<double> &src);
-    void gaussVertical(CImg <double>& src);
+    void gaussVertical(CImg <double> &src);
     void gaussFiltering(CImg<double> &src);
 
     // Fast filtering with space-variant sigma
     void spaceVariantGaussHorizontal(CImg<double> &src);
     void spaceVariantGaussVertical(CImg<double> &src);
     void spaceVariantGaussFiltering(CImg<double> &src);
+
     double density(double r);
 
-    // New input and update of equations
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
-    virtual void update();
-    // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
-    // Get output image (y(k))
-    virtual CImg<double>* getOutput();
+protected:
+    // Filter parameters
+    double sigma_;
+    double *buffer_;
 
+    // Deriche's coefficients
+    double q_;
+    double b0_;
+    double b1_;
+    double b2_;
+    double b3_;
+    double B_;
+
+    // Matrices
+    double M_[3][3];
+    CImg<double> q_m_;
+    CImg<double> b0_m_;
+    CImg<double> b1_m_;
+    CImg<double> b2_m_;
+    CImg<double> b3_m_;
+    CImg<double> B_m_;
+    CImg<double> M_m_;
+
+    // spaceVariantSigma
+    bool spaceVariantSigma_;
+    double R0_;
+    double K_;
+
+    CImg<double> *inputImage_;
+    CImg<double> *outputImage_;
 };
 
-#endif // GAUSSFILTER_H
+#endif // COREM_GAUSSFILTER_H

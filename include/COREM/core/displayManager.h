@@ -34,29 +34,29 @@ protected:
      vector<double> margin;
 
     // buffers of displays and images generated in each neural layer
-    vector <DisplayWithBar*> displays;
+    vector<DisplayWithBar*> displays;
     CImg<double> **intermediateImages;
 
     // Multimeter buffer and parameters
-    vector <multimeter*> multimeters;
-    vector <string> multimeterIDs;
-    vector <string> moduleIDs;
-    vector <int> multimeterType;
+    vector<multimeter*> multimeters;
+    vector<string> multimeterIDs;
+    vector<string> moduleIDs;
+    vector<int> multimeterType;
     // to select either temporal or spatial multimeter
-    vector < vector <int> > multimeterParam;
+    vector< vector<int> > multimeterParam;
     // LN multimeters
-    vector <double> LNSegment;
-    vector <double> LNInterval;
-    vector <double> LNStart;
-    vector <double> LNStop;
+    vector<double> LNSegment;
+    vector<double> LNInterval;
+    vector<double> LNStart;
+    vector<double> LNStop;
     string LNFile;
     double LNfactor;
 
     // last row to display
     int last_row,last_col;
     //color bars
-    CImg <double> **bars;
-    CImg <double> *templateBar;
+    CImg<double> **bars;
+    CImg<double> *templateBar;
 
     // number of modules
     int numberModules;
@@ -99,9 +99,10 @@ public:
     void addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2, bool temporalSpatial, string Show);
     void addMultimeterLN(string multimeterID, string moduleID, int x, int y, double segment, double interval, double start, double stop, string Show);
     void setLNFile(const string &file, double ampl);
+    bool hasLNFile();
 
     // Update displays
-    void updateDisplay(CImg <double> *input, vector<module*> &modules, double switchTime, int simCurrTime, double simDuration, double numberTrials,double totalNumberTrials);
+    void updateDisplay(CImg <double> *input, vector<Module*> &modules, double switchTime, int simCurrTime, double simDuration, double numberTrials,double totalNumberTrials);
 
     // Set Sim step
     void setSimStep(double value);

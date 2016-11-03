@@ -18,12 +18,19 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/python.hpp>
+#ifdef DEBUG
+#include <boost/chrono.hpp>
+#endif
+
 
 using namespace cimg_library;
 using namespace std;
 
 namespace fs = boost::filesystem;
 namespace py = boost::python;
+#ifdef DEBUG
+namespace bchrono = boost::chrono;
+#endif
 
 CImg<double>* custom_img(int currTime, int width, int height) {
     CImg<double>* retval = new CImg<double>(width, height, 1, 3);
@@ -56,6 +63,68 @@ CImg<double>* impulse_image(int width, int height) {
     return retval;
 }
 
+CImg<double> put_sin_ball(CImg<double>* img, double freq, double ampl, double t, int x0, int y0, int size) {
+    int yt = y0;
+    int xt = x0 + std::sin((freq * t) * (2 * PI)) * ampl;
+
+    CImg<double> ret = *img;
+    for (int i = xt - size/2; i < xt + size/2; i++) {
+        for (int j = yt - size/2; j < yt + size/2; j++) {
+            if (std::sqrt((std::pow((j - yt), 2) + std::pow((i - xt), 2))) < size/2) {
+                ret(i, j, 0, 0) = 0;
+                ret(i, j, 0, 1) = 255;
+                ret(i, j, 0, 2) = 0;
+            }
+        }
+    }
+
+    return ret;
+}
+
+void draw_ball(CImg<double>& img, int x, int y, int sz, int r, int g, int b) {
+    for (int i = x - sz/2; i < x + sz/2; i++) {
+        for (int j = y - sz/2; j < y + sz/2; j++) {
+            if (j >= 0 && j < img.height() && i >= 0 && i < img.width()) {
+                if (std::sqrt((std::pow((j - y), 2) + std::pow((i - x), 2))) < sz/2) {
+                    img(i, j, 0, 0) = r;
+                    img(i, j, 0, 1) = g;
+                    img(i, j, 0, 2) = b;
+                }
+            }
+        }
+    }
+}
+
+void fill_bg(CImg<double>& img, int r, int g, int b) {
+    for (int row = 0; row < img.height(); row++) {
+        for (int col = 0; col < img.width(); col++) {
+            img(col, row, 0, 0) = r;
+            img(col, row, 0, 1) = g;
+            img(col, row, 0, 2) = b;
+        }
+    }
+}
+
+CImg<double> put_pulse_ball(CImg<double>* img, double freq, double t, double rmin, double rmax) {
+    int yt = 120;
+    int xt = 160;
+    int size = (int)(rmin + (rmax-rmin) * std::abs(std::sin((freq * t) * (2 * PI))));
+
+    CImg<double> ret = *img;
+    for (int i = xt - size/2; i < xt + size/2; i++) {
+        for (int j = yt - size/2; j < yt + size/2; j++) {
+            if (std::sqrt((std::pow((j - yt), 2) + std::pow((i - xt), 2))) < size/2) {
+                ret(i, j, 0, 0) = 0;
+                ret(i, j, 0, 1) = 255;
+                ret(i, j, 0, 0) = 0;
+            }
+        }
+    }
+
+    return ret;
+
+}
+
 int main(int argc, char *argv[])
 {
     boost::filesystem::path currentDirRoot(boost::filesystem::current_path());
@@ -82,25 +151,44 @@ int main(int argc, char *argv[])
 
     Retina retina;
     retina.loadCircuit(retinaPath.string());
-    retina.displayMg.setLNFile(constants::resultID, constants::outputfactor);
 
     CImg<double> inputImg;
     if (argc >= 3) {
         inputImg.load(argv[2]);
     }
 
-    for(int k = 0; k < retina.getSimDuration() / retina.getSimStep(); k += retina.getSimStep()) {
+#ifdef DEBUG
+    bchrono::time_point<bchrono::system_clock> start = bchrono::system_clock::now();
+#endif
+
+    CImg<double> q(320, 240, 1, 3, 0);
+
+    fill_bg(q, 255, 0, 0);
+    int ballsz = 18;
+    for (int r = 0; r < q.height(); r += 2*ballsz) {
+        for (int c = 0; c < q.width(); c += 2*ballsz) {
+            draw_ball(q, c, r, ballsz, 0, 255, 0);
+        }
+    }
+
+    for(int k = 0; k < retina.getSimDuration() || true; k += retina.getSimStep()) {
         if (argc >= 3) {
             // Using the argument image
-            retina.feedInput(&inputImg);
+            retina.update(&q);
         }
         else {
             // Assuming no input is needed, so the retina configuration has a reference
             // to an image sequence
-            retina.feedInput(k);
+            retina.update(k);
         }
-        retina.update();
     }
+
+#ifdef DEBUG
+    bchrono::duration<double> diff = bchrono::system_clock::now() - start;
+    std::cout << "main(): total time: " << diff.count() << ", frame rate: "
+              << (retina.getSimDuration() / retina.getSimStep()) / diff.count()
+              << std::endl;
+#endif
 
     return 0;
 }

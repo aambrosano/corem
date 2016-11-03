@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <cmath>
+#include <vector>
 // #include <unistd.h>
 
 // maximum path length
@@ -43,6 +44,9 @@ namespace constants {
     extern EXPORT std::string retinaScript;
     extern EXPORT const std::string resultID;
     extern EXPORT const double outputfactor;
+    extern std::vector<double> timesGauss;
+    extern std::vector<double> timesLinear;
+    extern std::vector<double> timesSinglecomp;
 }
 
 #endif // CONSTANTS_H

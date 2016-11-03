@@ -1,27 +1,46 @@
 #include <COREM/core/module.h>
 
-module::module(int columns, int rows, double temporal_step){
-    step = temporal_step;
-    columns_ = columns;
-    rows_ = rows;
+ModulePort::ModulePort(std::vector<std::string> sources, std::vector<Operation> operations,
+                       SynapseType synapseType)
+    : sources_(sources), operations_(operations), type_(synapseType) {}
+
+std::vector<std::string> ModulePort::getSources() {
+    return sources_;
 }
 
-//------------------------------------------------------------------------------//
-
-void module::setColumns(int columns){
-    if (columns > 0) {
-        columns_ = columns;
-    }
+std::vector<Operation> ModulePort::getOperations() {
+    return operations_;
 }
 
-void module::setRows(int rows) {
-    if (rows > 0) {
-        rows_ = rows;
-    }
+SynapseType ModulePort::getSynapseType() {
+    return type_;
 }
 
-void module::set_step(double temporal_step) {
-    if (temporal_step > 0) {
-        step = temporal_step;
-    }
+void ModulePort::update(CImg<double> input) {
+    data_ = input;
+}
+
+const CImg<double> ModulePort::getData() {
+    return data_;
+}
+
+Module::Module(std::string id, unsigned int columns, unsigned int rows, double temporalStep,
+               std::map<std::string, double> parameters)
+    : columns(columns), rows(rows), id_(id), temporalStep_(temporalStep), parameters_(parameters) {
+    std::cout << "Module::Module() called with columns(" << columns << "), rows(" << rows
+              << "), id(" << id << ")" << std::endl;
+}
+
+void Module::setSize(unsigned int columns, unsigned int rows) {
+    columns = columns;
+    rows = rows;
+}
+
+bool Module::operator==(std::string s) {
+    return id_ == s;
+}
+
+std::string Module::getID()
+{
+    return id_;
 }

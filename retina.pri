@@ -8,6 +8,8 @@ QT -= core
 INCLUDEPATH += $$PWD/include
 INCLUDEPATH += $$PWD/CImg-1.6.0_rolling141127
 
+DEFINES += DEBUG
+
 if (nodisplay) {
     DEFINES += cimg_display=0
 }
@@ -16,7 +18,10 @@ unix {
     # Find python-devel with pkg-config
     CONFIG += link_pkgconfig
     PKGCONFIG += python2
-    QMAKE_CXXFLAGS += -std=c++11 -fPIC -fopenmp
+    QMAKE_CXXFLAGS += -fPIC -fopenmp -std=c++03
+    QMAKE_CXXFLAGS_RELEASE -= -O2
+    QMAKE_CXXFLAGS_RELEASE += -O3
+    message($$QMAKE_CXXFLAGS)
 }
 
 win32 {

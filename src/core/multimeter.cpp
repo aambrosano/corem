@@ -176,7 +176,7 @@ void multimeter::showLNAnalysisAvg(int col, int row, double waitTime, double seg
     fs::path to_file = getExecutablePath() / "results" / LNFile;
 
     std::ifstream fin;
-    fin.open(to_file.string());
+    fin.open(to_file.string().c_str());
     vector<double> F;
 
     while (!fin.eof())
@@ -789,7 +789,7 @@ vector<double> multimeter::readSeq(const string &LNFile) {
     fs::path to_file = getExecutablePath() / "results" / seqFile;
 
     std::ifstream fin;
-    fin.open(to_file.string());
+    fin.open(to_file.string().c_str());
     vector<double> F;
 
     if (fin.good()) {
@@ -868,7 +868,7 @@ void multimeter::saveArray(double* array, unsigned int arraySize, string fileID)
         // Update the values
         double tmp;
 
-        fin.open(resultsFile.string());
+        fin.open(resultsFile.string().c_str());
         fin.precision(64);
         fin >> tmp;
 
@@ -877,7 +877,7 @@ void multimeter::saveArray(double* array, unsigned int arraySize, string fileID)
     }
 
     // Save the values on file
-    fout.open(resultsFile.string());
+    fout.open(resultsFile.string().c_str());
     fout.precision(64);
 
     for (unsigned int i = 0; i < arraySize - 1; i++) {

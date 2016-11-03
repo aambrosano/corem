@@ -39,57 +39,18 @@ namespace py = boost::python;
 namespace fs = boost::filesystem;
 
 class EXPORT Retina {
-protected:
-    // Image size
-    int columns_, rows_;
-    // simulation step and ppd
-    // double step;
-    double pixelsPerDegree;
-
-    // Retina output and accumulator of intermediate images
-    CImg <double> *output;
-    CImg <double> accumulator;
-    // retina input channels (for color conversion)
-    CImg<double> RGBred,RGBgreen,RGBblue,ch1,ch2,ch3,rods,X_mat,Y_mat,Z_mat;
-    // vector of retina modules
-    vector <module*> modules;
-    // Type of input
-    int inputType;
-
-    // Inputs
-    vector < CImg<double> > sequence;
-    GratingGenerator *g;
-    fixationalMovGrating *fg;
-    whiteNoise *WN;
-    impulse *imp;
-    // input seq
-    CImg<double>** inputSeq;
-    // Number of images in the input seq
-    int numberImages;
-    // Number of repetitions of each image
-    int repetitions;
-
-    // Simulation time
-    int simCurrTime, simDuration;
-    // Current and total number of trials
-    double currentTrial, totalNumberTrials;
-
-    // Display comments
-    bool verbose;
-    CImg<double> lastFedInput;
-
 public:
+    // Image size
+    unsigned int columns;
+    unsigned int rows;
+
     double simStep;
     DisplayManager displayMg;
 
-    // Constructor, copy, destructor.
-    Retina(int columns=1, int rows=1, double temporal_step=1.0);
-    Retina(const Retina& copy) : Retina(copy.columns_, copy.rows_, copy.simStep) {}
+    Retina();
 
-    void reset(int columns=1, int rows=1, double temporal_step=1.0);
+    void initialize();
 
-    // Allocate values and set protected parameters
-    void allocateValues();
     void setColumns(int columns);
     void setRows(int rows);
     void set_step(double temporal_step);
@@ -109,19 +70,19 @@ public:
     void setPixelsPerDegree(double ppd);
     double getPixelsPerDegree();
     // feedInput accepting a custom image
-    CImg<double> *feedInput(CImg<double>* img);
+    CImg<double> *update(CImg<double>* img);
     // New input and update of equations
-    CImg<double> *feedInput(int simStep);
-    void update();
+    CImg<double> *update(int simStep);
+    // void update();
 
     // New module
-    void addModule(module* m, string ID);
+    void addModule(Module* m);
     // Get module
-    module* getModule(int ID);
+    Module* getModule(int ID);
     // get number of modules
     int getNumberModules();
     // Connect modules
-    bool connect(vector<string> from, string to, vector<int> operations, string type_synapse);
+    bool connect(vector<string> from, string to, vector<Operation> operations, SynapseType type_synapse);
 
     // Grating generator
     bool generateGrating(int type,double simStep,double lengthB,double length,double length2,int X,int Y,double freq,double T,double Lum,double Cont,double phi,double phi_t,double theta,double red, double green, double blue,double red_phi, double green_phi,double blue_phi);
@@ -166,9 +127,49 @@ public:
     void Py_Update(const py::object&);
     double Py_GetValue(int row, int col, string layer="Output");
 
+protected:
+    // simulation step and ppd
+    // double step;
+    double pixelsPerDegree;
+
+    // Retina output and accumulator of intermediate images
+    CImg <double> *output;
+    CImg <double> accumulator;
+    // retina input channels (for color conversion)
+    CImg<double> RGBred,RGBgreen,RGBblue,ch1,ch2,ch3,rods,X_mat,Y_mat,Z_mat;
+    // vector of retina modules
+public: vector<Module*> modules;
+    // Type of input
+protected:int inputType;
+
+    // Inputs
+    vector< CImg<double> > sequence;
+    GratingGenerator *g;
+    fixationalMovGrating *fg;
+    whiteNoise *WN;
+    impulse *imp;
+    // input seq
+    CImg<double>** inputSeq;
+    // Number of images in the input seq
+    int numberImages;
+    // Number of repetitions of each image
+    int repetitions;
+
+    // Simulation time
+    int simCurrTime, simDuration;
+    // Current and total number of trials
+    double currentTrial, totalNumberTrials;
+
+    // Display comments
+    bool verbose;
+    CImg<double> lastFedInput;
+
 private:
     CImg<double>* convertImage(const boost::python::api::object& img);
     CImg<double>* convertndarray(const boost::python::api::object& img);
+
+    bool initialized;
+    bool init_display;
 };
 
 EXPORT void define_retina_python();

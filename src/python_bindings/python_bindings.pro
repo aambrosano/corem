@@ -14,7 +14,7 @@ unix {
     LIBS += -L../../lib -lretina
 
     CONFIG(debug, debug|release) {
-        target.path += $$INSTALL_PREFIX/lib/debug/lib
+        target.path += $$INSTALL_PREFIX/lib/debug/usr/lib
     }
     CONFIG(release, release|debug) {
         target.path += $$INSTALL_PREFIX/lib

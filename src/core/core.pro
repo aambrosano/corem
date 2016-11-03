@@ -8,10 +8,10 @@ unix {
 
     QMAKE_LFLAGS += -shared
     LIBS += -lX11 -lpthread -fopenmp
-    LIBS += -lboost_python -lboost_filesystem -lboost_system
+    LIBS += -lboost_python -lboost_filesystem -lboost_system -lboost_chrono
 
     CONFIG(debug, debug|release) {
-        target.path += $$INSTALL_PREFIX/lib/debug/lib
+        target.path += $$INSTALL_PREFIX/lib/debug/usr/lib
     }
     CONFIG(release, release|debug) {
         target.path += $$INSTALL_PREFIX/lib

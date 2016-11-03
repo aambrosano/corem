@@ -1,80 +1,70 @@
 #include <COREM/core/staticNonLinearity.h>
 
-StaticNonLinearity::StaticNonLinearity(int x, int y, double temporal_step, int t){
-    columns_ = x;
-    rows_ = y;
-    step = temporal_step;
+StaticNonLinearity::StaticNonLinearity(std::string id, unsigned int columns, unsigned int rows,
+                                       double temporalStep, std::map<std::string, double> parameters,
+                                       int type)
+    : Module(id, columns, rows, temporalStep, parameters) {
+    type_ = type;
+    isThreshold_ = false;
 
-    type = t;
-    isThreshold = false;
+    for(std::map<std::string, double>::const_iterator entry = parameters_.begin();
+        entry != parameters_.end(); ++entry) {
+        if (entry->first == "slope") slope_.push_back(entry->second);
+        else if (entry->first == "offset") offset_.push_back(entry->second);
+        else if (entry->first == "exponent") exponent_.push_back(entry->second);
+        else if (entry->first == "max") exponent_.push_back(entry->second); // ?????
+        else if (entry->first == "threshold") {
+            threshold_.push_back(entry->second);
+            isThreshold_ = true;
+        }
+        else if (entry->first == "start") start_.push_back(entry->second);
+        else if (entry->first == "end") end_.push_back(entry->second);
+        else std::cerr << "StaticNonLinearity(): You used an unrecognized parameter." << std::endl;
+    }
+
+    inputImage_  = new CImg<double>(columns, rows, 1, 1, 0.0);
+    outputImage_ = new CImg<double>(columns, rows, 1, 1, 0.0);
+    markers_     = new CImg<double>(columns, rows, 1, 1, 0.0);
 }
 
-//------------------------------------------------------------------------------//
-
-
-// Set functions
-void StaticNonLinearity::setSlope(double s, int segment){
-    slope[segment] = s;
+StaticNonLinearity::~StaticNonLinearity() {
+    delete inputImage_;
+    delete outputImage_;
+    delete markers_;
 }
 
-void StaticNonLinearity::setOffset(double o, int segment){
-    offset[segment] = o;
-}
+void StaticNonLinearity::update() {
+    // The module is not connected
+    if (this->source_ports.size() == 0)
+        return;
 
-void StaticNonLinearity::setExponent(double e, int segment){
-    exponent[segment] = e;
-}
-
-void StaticNonLinearity::setThreshold(double t, int segment){
-    threshold[segment] = t;
-    isThreshold = true;
-}
-
-void StaticNonLinearity::setType(int t){
-    type = t;
-}
-
-//------------------------------------------------------------------------------//
-
-void StaticNonLinearity::allocateValues(){
-    inputImage =    new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    outputImage =   new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    markers =       new CImg<double> (columns_, rows_, 1, 1, 0.0);
-
-}
-
-void StaticNonLinearity::feedInput(const CImg<double>& new_input, bool /* isCurrent */, int /* port */){
     // copy input image
-    *inputImage = new_input;
-}
-
-void StaticNonLinearity::update(){
-
+    *(inputImage_) = this->source_ports[0].getData();
     // polynomial function
-    if(type==0){
+    if(type_ == 0) {
 
-        if(isThreshold){
-            cimg_forXY((*inputImage),x,y) {
-                if((*inputImage)(x,y,0,0) < threshold[0])
-                    (*inputImage)(x,y,0,0) = threshold[0];
+        if (isThreshold_) {
+            cimg_forXY((*inputImage_),x,y) {
+                if((*inputImage_)(x, y, 0, 0) < threshold_[0])
+                    (*inputImage_)(x, y, 0, 0) = threshold_[0];
             }
         }
 
-        (*inputImage)*=slope[0];
-        (*inputImage)+=offset[0];
-        inputImage->pow(exponent[0]);
+        (*inputImage_) *= slope_[0];
+        (*inputImage_) += offset_[0];
+        inputImage_->pow(exponent_[0]);
     }
 
     // piecewise function
-    else if(type==1){
-            markers->fill(0.0);
-            for(unsigned int k=0;k<slope.size();k++){
-                cimg_forXY((*inputImage),x,y) {
-                    if((*inputImage)(x,y,0,0) >= start[k] && (*inputImage)(x,y,0,0) < end[k] && (*markers)(x,y,0,0)==0.0){
-                        (*inputImage)(x,y,0,0)*=slope[k];
-                        (*inputImage)(x,y,0,0)+=offset[k];
-                        (*inputImage)(x,y,0,0) = pow((*inputImage)(x,y,0,0),exponent[k]);
-                        (*markers)(x,y,0,0)=1.0;
+    else if(type_ == 1) {
+            markers_->fill(0.0);
+            for(unsigned int k = 0; k < slope_.size(); k++) {
+                cimg_forXY((*inputImage_), x, y) {
+                    if((*inputImage_)(x, y, 0, 0) >= start_[k] && (*inputImage_)(x, y, 0, 0) < end_[k] && (*markers_)(x, y, 0, 0) == 0.0) {
+                        (*inputImage_)(x, y, 0, 0) *= slope_[k];
+                        (*inputImage_)(x, y, 0, 0) += offset_[k];
+                        (*inputImage_)(x, y, 0, 0) = pow((*inputImage_)(x,y,0,0),exponent_[k]);
+                        (*markers_)(x, y, 0, 0) = 1.0;
 
                     }
                 }
@@ -83,104 +73,31 @@ void StaticNonLinearity::update(){
     }
 
     // Symmetric sigmoid (only for negative values)
-    else if(type==2){
+    else if(type_ == 2) {
         double absVal = 0.0;
-        cimg_forXY((*inputImage),x,y) {
-            absVal = abs((*inputImage)(x,y,0,0));
-            (*inputImage)(x,y,0,0) = sgn<double>((*inputImage)(x,y,0,0))*(exponent[0] / (1.0 + exp(-absVal*slope[0] + offset[0])));
+        cimg_forXY((*inputImage_), x, y) {
+            absVal = abs((*inputImage_)(x, y, 0, 0));
+            (*inputImage_)(x, y, 0, 0) = sgn<double>((*inputImage_)(x, y, 0, 0))*(exponent_[0] / (1.0 + exp(-absVal*slope_[0] + offset_[0])));
         }
-
     }
 
     // Standard sigmoid
-    else if(type==3){
+    else if(type_ == 3) {
         double value = 0.0;
-        cimg_forXY((*inputImage),x,y) {
-            value = (*inputImage)(x,y,0,0);
-            (*inputImage)(x,y,0,0) = (exponent[0] / (1.0 + exp(-value*slope[0] + offset[0])));
+        cimg_forXY((*inputImage_), x, y) {
+            value = (*inputImage_)(x, y, 0, 0);
+            (*inputImage_)(x, y, 0, 0) = (exponent_[0] / (1.0 + exp(-value*slope_[0] + offset_[0])));
         }
 
     }
 
-    *outputImage = *inputImage;
+    *outputImage_ = *inputImage_;
 
 }
-
-//------------------------------------------------------------------------------//
-
-bool StaticNonLinearity::setParameters(vector<double> params, vector<string> paramID){
-
-    bool correct = true;
-
-    for (unsigned int i = 0;i<params.size();i++){
-        const char * s = paramID[i].c_str();
-
-        if (strcmp(s,"slope")==0){
-            slope.push_back(params[i]);
-        }else if (strcmp(s,"offset")==0){
-            offset.push_back(params[i]);
-        }else if (strcmp(s,"exponent")==0){
-            exponent.push_back(params[i]);
-        }else if (strcmp(s,"max")==0){
-            exponent.push_back(params[i]);
-        }else if (strcmp(s,"threshold")==0){
-            threshold.push_back(params[i]);
-            isThreshold = true;
-        }
-        else if (strcmp(s,"start")==0){
-            start.push_back(params[i]);
-        }
-        else if (strcmp(s,"end")==0){
-            end.push_back(params[i]);
-        }
-        else{
-              correct = false;
-        }
-
-    }
-
-    return correct;
-
-}
-
-void StaticNonLinearity::clearParameters(vector<string> paramID){
-
-    for (unsigned int i = 0;i<paramID.size();i++){
-        const char * s = paramID[i].c_str();
-
-        if (strcmp(s,"slope")==0){
-            slope.clear();
-        }else if (strcmp(s,"offset")==0){
-            offset.clear();
-        }else if (strcmp(s,"exponent")==0){
-            exponent.clear();
-        }else if (strcmp(s,"max")==0){
-            exponent.clear();
-        }else if (strcmp(s,"threshold")==0){
-            threshold.clear();
-        }
-        else if (strcmp(s,"start")==0){
-            start.clear();
-        }
-        else if (strcmp(s,"end")==0){
-            end.clear();
-        }
-
-
-    }
-
-
-
-}
-
-//------------------------------------------------------------------------------//
-
 
 CImg<double>* StaticNonLinearity::getOutput(){
-    return outputImage;
+    return outputImage_;
 }
-
-//------------------------------------------------------------------------------//
 
 template <typename T> int StaticNonLinearity::sgn(T val) {
     return (T(0) < val) - (val < T(0));

@@ -20,13 +20,13 @@
 
 #include <CImg.h>
 
-#include <random>
-#include <chrono>
+#include <boost/random.hpp>
+#include <boost/chrono.hpp>
 
 using namespace cimg_library;
 using namespace std;
 
-class fixationalMovGrating{
+class fixationalMovGrating {
 protected:
 
     // Grating parameters
@@ -50,12 +50,25 @@ protected:
     int x0,y0;
 
     // Normal distributions for each interval (one for centre and one for periphery)
-    normal_distribution<double> distribution1,distribution2;
-    default_random_engine generator1,generator2,generator3,generator4;
+    boost::random::normal_distribution<double> distribution1;
+    boost::random::normal_distribution<double> distribution2;
+
+    boost::random::linear_congruential_engine<unsigned long, 16807, 0, 2147483647> generator1;
+    boost::random::linear_congruential_engine<unsigned long, 16807, 0, 2147483647> generator2;
+    boost::random::linear_congruential_engine<unsigned long, 16807, 0, 2147483647> generator3;
+    boost::random::linear_congruential_engine<unsigned long, 16807, 0, 2147483647> generator4;
 
     // aux variables to update the grating
     CImg <double> aux;
-    double Pi,jitter1,jitter2,radius,value1,value2,value3,j1,j2;
+    double Pi;
+    double jitter1;
+    double jitter2;
+    double radius;
+    double value1;
+    double value2;
+    double value3;
+    double j1;
+    double j2;
 
 public:
     // Constructor, copy, destructor.

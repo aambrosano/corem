@@ -6,4 +6,7 @@ namespace constants{
 
     const std::string resultID = "contrast";
     const double outputfactor = 50.0; // to scale LN analysis
+    std::vector<double> timesGauss;
+    std::vector<double> timesLinear;
+    std::vector<double> timesSinglecomp;
 }

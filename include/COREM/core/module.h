@@ -1,84 +1,60 @@
-#ifndef MODULE_H
-#define MODULE_H
+#ifndef COREM_MODULE_H
+#define COREM_MODULE_H
 
-
-/* BeginDocumentation
- * Name: module
- *
- * Description: base class of retina structure. GaussFilter, LinearFilter, ShortTermPlasticity,
- * SingleCompartment and StaticNonLinearity inherit from module
- *
- * Author: Pablo Martinez Cañada. University of Granada. CITIC-UGR. Spain.
- * <pablomc@ugr.es>
- *
- * SeeAlso: GaussFilter, LinearFilter, ShortTermPlasticity, SingleCompartment,
- * StaticNonLinearity
- */
+#include <string>
+#include <vector>
+#include <map>
 
 #include <CImg.h>
-#include <vector>
-#include <iostream>
+
 #include "constants.h"
 
 using namespace cimg_library;
-using namespace std;
 
-class EXPORT module {
-protected:
-    // Image size
-    int columns_, rows_;
-    double step;
-    // module ID
-    string ID;
+enum SynapseType { CURRENT, CURRENT_INHIB, CONDUCTANCE, CONDUCTANCE_INHIB };
+enum Operation { ADD, SUB };
 
-    // input modules and arithmetic operations among them
-    vector<vector<int>> sourceOperations;
-    vector<vector<string>> sourceModuleIDs;
-    // types of input synapses
-    vector<int> typeSynapse;
-
+class ModulePort {
 public:
-    // Constructor, copy, destructor.
-    module(int columns=1,int rows=1,double temporal_step=1.0);
+    ModulePort(std::vector<std::string> sources, std::vector<Operation> operations, SynapseType synapseType);
 
-    // set protected parameters
-    void setColumns(int columns);
-    void setRows(int rows);
-    void set_step(double temporal_step);
+    std::vector<std::string> getSources();
+    std::vector<Operation> getOperations();
+    SynapseType getSynapseType();
+    void update(CImg<double> input);
+    const CImg<double> getData();
 
-    // add operations or ID of input modules
-    void addOperation(vector <int> ops){sourceOperations.push_back(ops);}
-    void addSourceIDs(vector <string> ID){sourceModuleIDs.push_back(ID);}
-    // get operations or ID of input modules
-    vector <int> getOperation(int op){return sourceOperations[op];}
-    vector <string> getID(int ID){return sourceModuleIDs[ID];}
-    // get size of vectors
-    int getSizeID() { return sourceModuleIDs.size(); }
-    int getSizeArith() { return sourceOperations.size(); }
-
-    // Set and get the name of the module
-    void setModuleID(string s){ID=s;}
-    string getModuleID(){return ID;}
-
-    // Set and get synapse type
-    void addTypeSynapse(int type){typeSynapse.push_back(type);}
-    int getTypeSynapse(int port){return typeSynapse[port];}
-
-    bool checkID(string name) { return ID == name; }
-
-    // virtual functions //
-    // Allocate values
-    virtual void allocateValues() {}
-    virtual void setX(int) {}
-    virtual void setY(int) {}
-    // New input and update of equations
-    virtual void feedInput(const CImg<double>&, bool, int) {}
-    virtual void update() {}
-    // Get output image (y(k))
-    virtual CImg<double>* getOutput() { return nullptr; }
-    // set Parameters
-    virtual bool setParameters(vector<double>, vector<string>) { return true; }
-    virtual void clearParameters(vector<string>) {}
+protected:
+    std::vector<std::string> sources_;
+    std::vector<Operation> operations_;
+    SynapseType type_;
+    CImg<double> data_;
 };
 
-#endif // MODULE_H
+class EXPORT Module {
+public:
+    Module(std::string id, unsigned int columns, unsigned int rows, double temporalStep,
+           std::map<std::string, double> parameters);
+
+    void setSize(unsigned int columns, unsigned int rows);
+
+    // TODO: find a way to remove isCurrent and port, as they are only used in
+    // SingleCompartment()
+    virtual void update() {}
+    virtual CImg<double> *getOutput() { return NULL; }
+
+    void addSource(Module *sourceModule, Operation operation, SynapseType synapse);
+    bool operator==(std::string s);
+
+    std::string getID();
+
+    unsigned int columns, rows;
+    std::vector<ModulePort> source_ports;
+
+protected:
+    std::string id_;
+    double temporalStep_;
+    std::map<std::string, double> parameters_;
+};
+
+#endif // COREM_MODULE_H

@@ -3,8 +3,8 @@
 fixationalMovGrating::fixationalMovGrating(int X,int Y,double radius,double jitter,double period,double step,double luminance,double contrast,double orientation,double red_weight,double green_weigh, double blue_weight,int t1,int t2,int ts)
 {
     unsigned seed1,seed2,seed3,seed4;
-    seed1 = std::chrono::system_clock::now().time_since_epoch().count();
-    seed3 = std::chrono::system_clock::now().time_since_epoch().count();
+    seed1 = boost::chrono::system_clock::now().time_since_epoch().count();
+    seed3 = boost::chrono::system_clock::now().time_since_epoch().count();
 
     // Fixed seed to lower processing time when optimizing parameters:
     // it is not necessary to average several trials, only one trial
@@ -38,28 +38,28 @@ fixationalMovGrating::fixationalMovGrating(int X,int Y,double radius,double jitt
     aux = *(new CImg <double>(Y,X,1,3));
 
 
-    generator1 = *(new default_random_engine(seed1));
-    distribution1 = *(new normal_distribution<double>(0.0,step_size));
+    generator1 = *(new boost::random::linear_congruential<unsigned long, 16807, 0, 2147483647>(seed1));
+    distribution1 = *(new boost::random::normal_distribution<double>(0.0,step_size));
 
     if(type1 == 0){
-        seed2 = std::chrono::system_clock::now().time_since_epoch().count();
+        seed2 = boost::chrono::system_clock::now().time_since_epoch().count();
     }else{
         seed2 = seed1;
     }
 
-    generator2 = *(new default_random_engine(seed2));
-    distribution2 = *(new normal_distribution<double>(0.0,step_size));
+    generator2 = *(new boost::random::linear_congruential<unsigned long, 16807, 0, 2147483647>(seed2));
+    distribution2 = *(new boost::random::normal_distribution<double>(0.0,step_size));
 
 
-    generator3 = *(new default_random_engine(seed3));
+    generator3 = *(new boost::random::linear_congruential<unsigned long, 16807, 0, 2147483647>(seed3));
 
     if(type2 == 0){
-        seed4 = std::chrono::system_clock::now().time_since_epoch().count();
+        seed4 = boost::chrono::system_clock::now().time_since_epoch().count();
     }else{
         seed4 = seed3;
     }
 
-    generator4 = *(new default_random_engine(seed4));
+    generator4 = *(new boost::random::linear_congruential<unsigned long, 16807, 0, 2147483647>(seed4));
 
 
     Pi = 3.14159265;

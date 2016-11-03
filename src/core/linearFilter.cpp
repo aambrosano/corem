@@ -1,195 +1,130 @@
 #include <COREM/core/linearFilter.h>
+#include <cassert>
 
-LinearFilter::LinearFilter(int columns, int rows, double temporal_step,double initial_value)
-    : module(columns, rows, temporal_step) {
-    a = new double[1];
-    a[0] = 1;
-    b = new double[1];
-    b[0] = 1;
-    M = 1;
-    N = 0;
+LinearFilter::LinearFilter(std::string id, unsigned int columns, unsigned int rows,
+                           double temporalStep, std::map<std::string, double> parameters)
+    : Module(id, columns, rows, temporalStep, parameters) {
 
-    initial_input_value = initial_value;
-    last_inputs = 0;
-    last_values = 0;
-
-}
-
-LinearFilter::LinearFilter(const LinearFilter &copy) : module(copy) {
-
-    M=copy.M;
-    N=copy.N;
-
-    b=new double[M];
-    for(int i=0;i<M;++i)
-        b[i]=copy.b[i];
-
-    a=new double[N+1];
-    for(int i=0;i<N+1;++i)
-        a[i]=copy.a[i];
-
-    step=copy.step;
-    columns_=copy.columns_;
-    rows_=copy.rows_;
-
-    initial_input_value=copy.initial_input_value;
-    last_inputs=0;
-    last_values=0;
-
-
-}
-
-LinearFilter::~LinearFilter(){
-    if(a) delete[] a;
-    if(b) delete[] b;
-
-    if(last_inputs) delete[] last_inputs;
-    if(last_values) delete[] last_values;
-}
-
-//------------------------------------------------------------------------------//
-
-
-void LinearFilter::allocateValues(){
-    last_inputs = new CImg<double>*[M];
-    last_values = new CImg<double>*[N+1];
-
-    last_inputs[0]=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    for (int i=1;i<M;i++)
-      last_inputs[i]=new CImg<double> (columns_, rows_, 1, 1, initial_input_value);
-    for (int j=0;j<N+1;j++)
-      last_values[j]=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-
-}
-
-
-//------------------------------------------------------------------------------//
-
-void LinearFilter::Exp(double tau){
-
-    if(tau>0)
-    {
-      M=1;
-      N=1;
-      a=new double[N+1];
-      b=new double[M];
-      a[0]=1; a[1]=-exp(-step/tau);
-      b[0]=1-exp(-step/tau);
-    }
-
-}
-
-void LinearFilter::Gamma(double tau,int n){
-
-    if(tau>0 && n>=0)
-    {
-       M=1; N=n+1;
-       double tauC=n? tau/n : tau;
-       double c=exp(-step/tauC);
-
-       b=new double[1]; b[0]=pow(1-c,N);
-       a=new double[N+1];
-
-       for(int i=0;i<=N;++i)
-           a[i]=pow(-c,i)*combination(N,i);
-    }
-}
-
-
-//------------------------------------------------------------------------------//
-
-bool LinearFilter::setParameters(vector<double> params, vector<string> paramID){
-
-    bool correct = true;
     double tau = 0.0;
     int n = 0;
     int type = 0;
 
-    for (unsigned int i = 0;i<params.size();i++){
-        const char * s = paramID[i].c_str();
-
-        if (strcmp(s,"tau")==0){
-            tau = params[i];
-        }else if (strcmp(s,"n")==0){
-            n = (int)params[i];
-        }else if (strcmp(s,"Exp")==0){
-            type = 0;
-        }else if (strcmp(s,"Gamma")==0){
-            type = 1;
-        }
-        else{
-              correct = false;
-        }
-
+    for(std::map<std::string, double>::const_iterator entry = parameters_.begin();
+        entry != parameters_.end(); ++entry) {
+        if (entry->first == "tau") tau = entry->second;
+        else if (entry->first == "n") n = (int)entry->second;
+        else if (entry->first == "Exp") type = 0;
+        else if (entry->first == "Gamma") type = 1;
+        else std::cerr << "LinearFilter(): You used an unrecognized parameter." << std::endl;
     }
 
-    if(correct){
+    assert(type == 0 || type == 1);
+    (!type) ? exponential(tau) : gamma(tau, n);
 
-        switch(type){
-        case 0:
-            Exp(tau);
-            break;
-        case 1:
-            Gamma(tau,n);
-            break;
-        default:
-            correct = false;
-            break;
-        }
+    last_inputs = new CImg<double>*[M];
+    last_values = new CImg<double>*[N+1];
+
+    // Note: The initial_value parameter used to initialize last_inputs from 1 to M
+    // was always set to 0, so it was removed
+    for (int i = 0; i < M; i++)
+        last_inputs[i] = new CImg<double>(columns, rows, 1, 1, 0.0);
+    for (int j = 0; j < N+1;j++)
+        last_values[j] = new CImg<double>(columns, rows, 1, 1, 0.0);
+}
+
+LinearFilter::~LinearFilter() {
+    delete[] a;
+    delete[] b;
+    for (int i = 0; i < M; i++) delete last_inputs[i];
+    delete[] last_inputs;
+    for (int j = 0; j < N+1; j++) delete last_values[j];
+    delete[] last_values;
+}
+
+unsigned int LinearFilter::arrangement(unsigned int n, unsigned int k) {
+    int res = 1;
+    for (unsigned int i = n; i > n-k; --i)
+        res *= i;
+
+    return res;
+}
+
+inline unsigned int LinearFilter::factorial(unsigned int n) {
+    return arrangement(n, n);
+}
+
+inline unsigned int LinearFilter::combination(unsigned int n, unsigned int k) {
+    return arrangement(n, k)/factorial(k);
+}
+
+void LinearFilter::exponential(double tau) {
+    if (tau > 0) {
+        M = 1;
+        N = 1;
+        a = new double[N+1];
+        b = new double[M];
+        a[0] = 1;
+        a[1] = -std::exp(-temporalStep_/tau);
+        b[0] = 1 - std::exp(-temporalStep_/tau);
     }
-
-    return correct;
-
+    else std::cerr << "LinearFilter::exponential: invalid value for tau, not initializing." << std::endl;
 }
 
-//------------------------------------------------------------------------------//
+void LinearFilter::gamma(double tau, int n) {
+    if (tau > 0 && n >= 0) {
+       M = 1;
+       N = n + 1;
+       double tauC = (n) ? tau/n : tau;
+       double c = std::exp(-temporalStep_/tauC);
 
+       b = new double[1];
+       b[0] = std::pow(1-c,N);
+       a = new double[N+1];
 
-void LinearFilter::feedInput(const CImg<double>& new_input, bool /* isCurrent */, int /* port */){
-
-    *(last_inputs[0])=new_input;
-
+       for(int i = 0; i <= N; ++i)
+           a[i] = pow(-c,i)*combination(N,i);
+    }
+    else std::cerr << "LinearFilter::gamma: invalid value for tau or n, not initializing." << std::endl;
 }
 
-//------------------------------------------------------------------------------//
-
-void LinearFilter::update(){
+void LinearFilter::update() {
 #ifdef DEBUG
-    auto start = std::chrono::system_clock::now();
+    bchrono::time_point<bchrono::system_clock> start = bchrono::system_clock::now();
 #endif
+    // The module is not connected
+    if (this->source_ports.size() == 0)
+        return;
+
+    *(last_inputs[0]) = this->source_ports[0].getData();
     // Rotation on addresses of the last_values.
-    CImg<double>* fakepoint=last_values[N];
-    for(int i=1;i<N+1;++i)
-      last_values[N+1-i]=last_values[N-i];
-    last_values[0]=fakepoint;
+    CImg<double>* fakepoint = last_values[N]; // ??
+    for(int i = 1; i < N+1; ++i)
+        last_values[N+1-i] = last_values[N-i];
+    last_values[0] = fakepoint;
 
     // Calculating new value of filter recursively:
     *(last_values[0]) = b[0]* (*(last_inputs[0]));
-    for(int j=1;j<M;j++)
-      *(last_values[0]) += ( b[j] * (*(last_inputs[j])) );
-    for(int k=1;k<N+1;k++)
-      *(last_values[0]) -= ( a[k] * (*(last_values[k])) );
-    if(a[0]!=1)
-      ( *(last_values[0]) )/=a[0];
+    for(int j = 1; j < M; j++)
+        *(last_values[0]) += ( b[j] * (*(last_inputs[j])) );
+    for(int k = 1; k < N + 1; k++)
+        *(last_values[0]) -= ( a[k] * (*(last_values[k])) );
+    if(a[0] != 1)
+        ( *(last_values[0]) ) /= a[0];
 
+    if (M > 1) {
+        for(int i = 1; i < M; ++i)
+            last_inputs[M-i] = last_inputs[M-i-1];
+    }
 
-    //Reinitialization procedure
-      if(M>1)
-      {
-        for(int i=1;i<M;++i)
-          last_inputs[M-i]=last_inputs[M-i-1];
-      }
-//      last_inputs[0]->fill(0.0);
+    // last_inputs[0]->fill(0.0);
+
 #ifdef DEBUG
-    std::chrono::duration<double> diff = std::chrono::system_clock::now()-start;
-    std::cout << "LinearFilters::update, " << diff.count() << std::endl;
+    bchrono::duration<double> diff = bchrono::system_clock::now()-start;
+    constants::timesLinear.push_back(diff.count());
 #endif
 
 }
 
-//------------------------------------------------------------------------------//
-
-
-CImg<double>* LinearFilter::getOutput(){
+CImg<double>* LinearFilter::getOutput() {
     return last_values[0];
 }

@@ -1,5 +1,5 @@
-#ifndef STATICNONLINEARITY_H
-#define STATICNONLINEARITY_H
+#ifndef COREM_STATICNONLINEARITY_H
+#define COREM_STATICNONLINEARITY_H
 
 /* BeginDocumentation
  * Name: StaticNonLinearity
@@ -13,62 +13,45 @@
  */
 
 #include <CImg.h>
-#include <iostream>
-#include "vector"
+
 #include "module.h"
 #include "constants.h"
 
 using namespace cimg_library;
-using namespace std;
 
-class EXPORT StaticNonLinearity : public module {
+class EXPORT StaticNonLinearity : public Module {
+public:
+    StaticNonLinearity(std::string id, unsigned int columns, unsigned int rows,
+                       double temporalStep, std::map<std::string, double> parameters,
+                       int type);
+    StaticNonLinearity(const StaticNonLinearity &copy);
+    ~StaticNonLinearity();
+
+    virtual void update();
+    virtual CImg<double>* getOutput();
+
+    template <typename T> int sgn(T val);
+
 protected:
-
     // type of nonlinearity
-    int type;
+    int type_;
 
     // nonlinearity parameters
-    vector <double> slope;
-    vector <double> offset;
-    vector <double> exponent;
-    vector <double> threshold;
+    std::vector<double> slope_;
+    std::vector<double> offset_;
+    std::vector<double> exponent_;
+    std::vector<double> threshold_;
 
     // for the piecewise function
-    vector <double> start;
-    vector <double> end;
+    std::vector<double> start_;
+    std::vector<double> end_;
 
-    bool isThreshold;
+    bool isThreshold_;
 
     // buffers
-    CImg<double> *inputImage;
-    CImg<double> *outputImage;
-    CImg<double> *markers;
-
-public:
-    // Constructor, copy, destructor.
-    StaticNonLinearity(int x=1, int y=1, double temporal_step=1.0, int t=0);
-
-    // Set functions
-    void setSlope(double s=1.0, int segment=0);
-    void setOffset(double o=0.0, int segment=0);
-    void setExponent(double e=1.0, int segment=0);
-    void setThreshold(double t=0.0, int segment=0);
-    void setType(int t);
-
-    // Allocate values
-    virtual void allocateValues();
-    virtual void setX(int x){columns_=x;}
-    virtual void setY(int y){rows_=y;}
-    // New input and update of equations
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
-    virtual void update();
-    // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
-    virtual void clearParameters(vector<string> paramID);
-    // Get output image (y(k))
-    virtual CImg<double>* getOutput();
-    // aux. func.
-    template <typename T> int sgn(T val);
+    CImg<double> *inputImage_;
+    CImg<double> *outputImage_;
+    CImg<double> *markers_;
 };
 
-#endif // STATICNONLINEARITY_H
+#endif // COREM_STATICNONLINEARITY_H

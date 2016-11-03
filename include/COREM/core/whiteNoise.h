@@ -14,20 +14,25 @@
 
 #include <CImg.h>
 
-#include <random>
-#include <chrono>
+#include <boost/random.hpp>
+
+#ifdef DEBUG
+#include <boost/chrono.hpp>
+
+namespace bchrono = boost::chrono;
+#endif
 
 using namespace cimg_library;
 using namespace std;
 
-class whiteNoise{
+class whiteNoise {
 private:
 
     // Normal distributions
-    normal_distribution<double> distribution1;
-    default_random_engine generator1;
-    normal_distribution<double> distribution2;
-    default_random_engine generator2;
+    boost::random::normal_distribution<double> distribution1;
+    boost::random::linear_congruential<unsigned long, 16807, 0, 2147483647> generator1;
+    boost::random::normal_distribution<double> distribution2;
+    boost::random::linear_congruential<unsigned long, 16807, 0, 2147483647> generator2;
 
     // time to switch
     double switchTime;
@@ -50,7 +55,7 @@ public:
     void initializeDist(unsigned seed);
 
     // get time to switch
-    double getSwitchTime(){return switchTime;}
+    double getSwitchTime() { return switchTime; }
 };
 
 #endif // WHITENOISE_H

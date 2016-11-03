@@ -1,5 +1,5 @@
-#ifndef LINEARFILTER_H
-#define LINEARFILTER_H
+#ifndef COREM_LINEARFILTER_H
+#define COREM_LINEARFILTER_H
 
 /* BeginDocumentation
  * Name: LinearFilter
@@ -16,21 +16,37 @@
  * model and simulator, with contrast gain control." Journal of computational
  * neuroscience 26.2 (2009): 219-249.
  *
- * SeeAlso:module
+ * SeeAlso: Module
  */
 
-
 #ifdef DEBUG
-#include <chrono>
+#include <boost/chrono.hpp>
+
+namespace bchrono = boost::chrono;
 #endif
 
 #include "module.h"
-#include "constants.h"
 
-using namespace cimg_library;
-using namespace std;
+class EXPORT LinearFilter : public Module {
+public:
+    LinearFilter(std::string id, unsigned int columns, unsigned int rows, double temporalStep,
+                 std::map<std::string, double> parameters);
+    LinearFilter(const LinearFilter &copy);
+    ~LinearFilter();
 
-class EXPORT LinearFilter : public module{
+    virtual void update();
+
+    virtual CImg<double>* getOutput();
+
+    // Exponential and gamma filter
+    void exponential(double tau);
+    void gamma(double tau,int n);
+
+    // Combinatorials of gamma function
+    inline unsigned int arrangement(unsigned int n, unsigned int k);
+    inline unsigned int factorial(unsigned int n);
+    inline unsigned int combination(unsigned int n, unsigned int k);
+
 protected:
     // filter parameters
     int M;
@@ -41,49 +57,6 @@ protected:
     // recursion buffers
     CImg<double>** last_inputs;
     CImg<double>** last_values;
-
-    double initial_input_value;
-
-public:
-    // Constructor, copy, destructor.
-    LinearFilter(int columns=1,int rows=1,double temporal_step=1.0,double initial_value=0.0);
-    LinearFilter(const LinearFilter& copy);
-    ~LinearFilter(void);
-
-    // Allocate values and set protected parameters
-    virtual void allocateValues();
-    virtual void setX(int x){columns_=x;}
-    virtual void setY(int y){rows_=y;}
-
-    // Exponential and gamma filter
-    void Exp(double tau);
-    void Gamma(double tau,int n);
-
-    // New input and update of equations
-    virtual void feedInput(const CImg<double> &new_input, bool isCurrent, int port);
-    virtual void update();
-
-    // Get output image (y(k))
-    virtual CImg<double>* getOutput();
-
-    // set Parameters
-    virtual bool setParameters(vector<double> params, vector<string> paramID);
-
-    // Combinatorials of gamma function:
-    inline int arrangement(int n, int k)
-    {
-      int res=1;
-      for(int i=n;i>n-k;--i)
-          res*=i;
-
-      return res;
-    }
-
-    inline int factorial(int n)
-    {return arrangement(n,n);}
-
-    inline int combination(int n, int k)
-    {return arrangement(n,k)/factorial(k);}
 };
 
-#endif // LINEARFILTER_H
+#endif // COREM_LINEARFILTER_H

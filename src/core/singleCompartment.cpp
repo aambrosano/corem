@@ -1,254 +1,173 @@
 #include <COREM/core/singleCompartment.h>
+#include <cassert>
 
-SingleCompartment::SingleCompartment(int x, int y, double temporal_step):module(x,y,temporal_step){
+SingleCompartment::SingleCompartment(std::string id, unsigned int columns, unsigned int rows,
+                                     double temporalStep, std::map<std::string, double> parameters)
+    : Module (id, columns, rows, temporalStep, parameters) {
+    Cm_ = 10e-9;
+    Rm_ = 1.0;
+    taum_ = 10e-6;
+    El_ = 0.0;
 
-    Cm=10^(-9);
-    Rm=1.0;
-    taum=10^(-6);
-    El=0.0;
+    number_current_ports_ = 0;
+    number_conductance_ports_ = 0;
+    update_count_ = 0;
 
-    number_current_ports=0;
-    number_conductance_ports=0;
+    current_potential_ = new CImg<double>(columns, rows, 1, 1, 0.0);
+    last_potential_ = new CImg<double>(columns, rows, 1, 1, 0.0);
+    total_cond_ = new CImg<double>(columns, rows, 1, 1, 0.0);
+    potential_inf_ = new CImg<double>(columns, rows, 1, 1, 0.0);
+    tau_ = new CImg<double>(columns, rows, 1, 1, 0.0);
+    exp_term_ = new CImg<double>(columns, rows, 1, 1, 0.0);
 
-    conductances=0;
-    currents=0;
-    current_potential=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    last_potential=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    total_cond=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    potential_inf=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    tau=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    exp_term=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-}
+    // TODO: the number of current and conductance ports is given at the
+    // beginning, but there's no check that the number of connections is
+    // compliant.
+    for(std::map<std::string, double>::const_iterator entry = parameters_.begin();
+        entry != parameters_.end(); ++entry) {
+        if (entry->first == "number_current_ports") {
+            assert(entry->second >= 0);
+            number_current_ports_ = entry->second;
+        }
+        else if (entry->first == "number_conductance_ports") {
+            assert(entry->second >= 0);
+            number_conductance_ports_ = entry->second;
+        }
+        else if (entry->first == "Rm") {
+            assert(entry->second > 0);
+            Rm_ = entry->second;
+        }
+        else if (entry->first == "tau") {
+            assert(entry->second > 0);
+            taum_ = entry->second;
+        }
+        else if (entry->first == "Cm") {
+            assert(entry->second > 0);
+            Cm_ = entry->second;
+        }
+        else if (entry->first == "E") {
+            assert(entry->second >= 0);
+            El_ = entry->second;
+        }
+    }
 
-SingleCompartment::SingleCompartment(const SingleCompartment &copy) : module(copy){
+    for (int i = 0; i < number_conductance_ports_; i++)
+        E_.push_back(El_);
 
-    step=copy.step;
-    columns_=copy.columns_;
-    rows_=copy.rows_;
+    conductances_ = new CImg<double>*[number_conductance_ports_];
+    currents_ = new CImg<double>*[number_current_ports_];
 
-    number_current_ports=copy.number_current_ports;
-    number_conductance_ports=copy.number_conductance_ports;
-    Cm = copy.Cm;
-    Rm = copy.Rm;
-    taum = copy.taum;
-    El = copy.El;
-
-    conductances=0;
-    currents=0;
-
-    current_potential=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    last_potential=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    total_cond=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    potential_inf=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    tau=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    exp_term=new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    for (int i = 0; i < number_conductance_ports_; i++)
+      conductances_[i] = new CImg<double>(columns, rows, 1, 1, 0.0);
+    for (int j = 0; j < number_current_ports_; j++)
+      currents_[j] = new CImg<double>(columns, rows, 1, 1, 0.0);
 }
 
 SingleCompartment::~SingleCompartment(){
-    if(conductances) delete[] conductances;
-    if(currents) delete[] currents;
+    for (int i = 0; i < number_conductance_ports_;i++) delete conductances_[i];
+    for (int j = 0; j < number_current_ports_; j++) delete currents_[j];
 
-    if(current_potential) delete current_potential;
-    if(last_potential) delete last_potential;
-    if(total_cond) delete total_cond;
-    if(potential_inf) delete potential_inf;
-    if(tau) delete tau;
-    if(exp_term) delete exp_term;
+    if (conductances_) delete[] conductances_;
+    if (currents_) delete[] currents_;
+
+    if (current_potential_) delete current_potential_;
+    if (last_potential_) delete last_potential_;
+    if (total_cond_) delete total_cond_;
+    if (potential_inf_) delete potential_inf_;
+    if (tau_) delete tau_;
+    if (exp_term_) delete exp_term_;
 }
 
-//------------------------------------------------------------------------------//
-
-
-void SingleCompartment::allocateValues(){
-    conductances = new CImg<double>*[number_conductance_ports];
-    currents = new CImg<double>*[number_current_ports];
-
-    for (int i=0;i<number_conductance_ports;i++){
-      conductances[i]=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-    }
-    for (int j=0;j<number_current_ports;j++)
-      currents[j]=new CImg<double> (columns_, rows_, 1, 1, 0.0);
-
-
-}
-
-
-void SingleCompartment::set_Cm(double capacitance){
-    if (capacitance>0)
-        Cm = capacitance;
-}
-
-void SingleCompartment::set_Rm(double resistance){
-    if (resistance>0)
-        Rm = resistance;
-}
-
-void SingleCompartment::set_taum(double temporal_constant){
-    if (temporal_constant>0)
-        taum = temporal_constant;
-}
-
-void SingleCompartment::set_El(double Nerst_l){
-    if (Nerst_l>=0)
-        El = Nerst_l;
-}
-
-void SingleCompartment::set_E(double NernstPotential, int port){
-    if (port>=0 && number_conductance_ports>0)
-        E[port]=NernstPotential;
-}
-
-void SingleCompartment::set_number_current_ports(int number){
-    if (number>0)
-        number_current_ports = number;
-}
-
-void SingleCompartment::set_number_conductance_ports(int number){
-    if (number>0)
-        number_conductance_ports = number;
-
-    for (int i=0;i<number_conductance_ports;i++){
-      E.push_back(0.0);
-    }
-}
-
-//------------------------------------------------------------------------------//
-
-bool SingleCompartment::setParameters(vector<double> params, vector<string> paramID){
-
-    bool correct = true;
-
-    for (unsigned int i = 0;i<params.size();i++){
-        const char * s = paramID[i].c_str();
-
-        if (strcmp(s,"number_current_ports")==0){
-            set_number_current_ports((int)params[i]);
-        }else if (strcmp(s,"number_conductance_ports")==0){
-            set_number_conductance_ports((int)params[i]);
-        }else if (strcmp(s,"Rm")==0){
-            set_Rm(params[i]);
-        }else if (strcmp(s,"tau")==0){
-            set_taum(params[i]);
-        }
-        else if (strcmp(s,"Cm")==0){
-            set_Cm(params[i]);
-        }
-        else if (strcmp(s,"E")==0){
-            set_El(params[i]);
-            for(unsigned int j=0;j<E.size();j++)
-                set_E(params[i],j);
-        }
-        else{
-              correct = false;
-        }
-
-    }
-
-    return correct;
-
-}
-
-//------------------------------------------------------------------------------//
-
-void SingleCompartment::feedInput(const CImg<double>& new_input,bool isCurrent,int port){
-
-    // the parameter 'port' corresponds to both current and conductance ports.
-    // Next piece of code adapts port to its correct range.
-    int number_of_currents = 0;
-    int number_of_conductances = 0;
-    for(unsigned int k=0;k<typeSynapse.size();k++){
-
-        if (k < static_cast<unsigned int>(port)){
-            if (typeSynapse[k]==0)
-                number_of_currents+=1;
-            else
-                number_of_conductances+=1;
-        } else if (k == static_cast<unsigned int>(port)) {
-            if (isCurrent)
-                port = port - number_of_conductances;
-            else
-                port = port - number_of_currents;
-        }
-
-    }
-
-    // feed new input
-        if(isCurrent && port<number_current_ports){
-            *(currents[port])=new_input;
-        }else if(port<number_conductance_ports){
-            *(conductances[port])=new_input;
-        }
-
-}
-
-//------------------------------------------------------------------------------//
-
-void SingleCompartment::update(){
+void SingleCompartment::update() {
 #ifdef DEBUG
-    auto start = std::chrono::system_clock::now();
+    bchrono::time_point<bchrono::system_clock> start = bchrono::system_clock::now();
 #endif
 
-    (*last_potential)=(*current_potential);
-    (*current_potential).fill(0.0);
+    // The module is not connected
+    if (this->source_ports.size() == 0)
+        return;
+
+    int icurr = 0;
+    int icond = 0;
+
+    for (unsigned int k = 0; k < source_ports.size(); k++) {
+        SynapseType st = source_ports[k].getSynapseType();
+        switch(st) {
+        case CURRENT:
+            *(currents_[icurr]) = source_ports[k].getData();
+            icurr++;
+            break;
+        case CURRENT_INHIB:
+            *(currents_[icurr]) = source_ports[k].getData();
+            icurr++;
+            break;
+        case CONDUCTANCE:
+            *(conductances_[icond]) = source_ports[k].getData();
+            icond++;
+            break;
+        case CONDUCTANCE_INHIB:
+            *(conductances_[icond]) = -source_ports[k].getData();
+            icond++;
+            break;
+        }
+    }
+
+    (*last_potential_)=(*current_potential_);
+    (*current_potential_).fill(0.0);
 
     // When there are conductance ports
-    if (number_conductance_ports>0){
+    if (number_conductance_ports_ > 0) {
 
-        (*total_cond) = (*(conductances[0]));
-        for(int k=1;k<number_conductance_ports;k++){
-            (*total_cond) += (*(conductances[k]));
-        }
+        (*total_cond_) = (*(conductances_[0]));
+        for(int k = 1; k < number_conductance_ports_; k++)
+            (*total_cond_) += (*(conductances_[k]));
+
         // in case total_cond = 0
-        (*total_cond) += DBL_EPSILON;
+        (*total_cond_) += DBL_EPSILON;
 
-     // tau
-        tau->fill(Cm);
-        tau->div((*total_cond));
+        // tau
+        tau_->fill(Cm_);
+        tau_->div((*total_cond_));
 
-     // potential at infinity
-        (*potential_inf) = (*(conductances[0]))*E[0];
-
-        for(int k=1;k<number_conductance_ports;k++){
-            (*potential_inf) += (*(conductances[k]))*E[k];
-        }
-        for(int k=0;k<number_current_ports;k++){
-            (*potential_inf) += (*(currents[k]));
-        }
-
-        potential_inf->div((*total_cond));
-
-      // When there are only current ports
-      }else{
-        //tau
-        tau->fill(taum);
         // potential at infinity
-        potential_inf->fill(El);
-        for(int k=0;k<number_current_ports;k++){
-            (*potential_inf) += (*(currents[k]))*Rm;
-        }
+        (*potential_inf_) = (*(conductances_[0]))*E_[0];
+
+        for(int k = 1; k < number_conductance_ports_; k++)
+            (*potential_inf_) += (*(conductances_[k]))*E_[k];
+        for(int k = 0; k < number_current_ports_; k++)
+            (*potential_inf_) += (*(currents_[k]));
+
+        potential_inf_->div((*total_cond_));
+
+    // When there are only current ports
+    } else {
+        //tau
+        tau_->fill(taum_);
+        // potential at infinity
+        potential_inf_->fill(El_);
+        for(int k = 0; k < number_current_ports_; k++)
+            (*potential_inf_) += (*(currents_[k])) * Rm_;
     }
 
-        // exponential term
-        exp_term->fill(-step);
-        exp_term->div(*tau);
-        exp_term->exp();
+    // exponential term
+    exp_term_->fill(-temporalStep_);
+    exp_term_->div(*tau_);
+    exp_term_->exp();
 
-        // membrane potential update
+    // membrane potential update
 
-        (*current_potential) += (*potential_inf);
-        (*current_potential) -= (*potential_inf).mul(*exp_term);
-        (*current_potential) += (*last_potential).mul(*exp_term);
+    (*current_potential_) += (*potential_inf_);
+    (*current_potential_) -= (*potential_inf_).mul(*exp_term_);
+    (*current_potential_) += (*last_potential_).mul(*exp_term_);
 
 #ifdef DEBUG
-        std::chrono::duration<double> diff = std::chrono::system_clock::now()-start;
-        std::cout << "SingleCompartment::update, " << diff.count() << std::endl;
+    bchrono::duration<double> diff = bchrono::system_clock::now()-start;
+    constants::timesSinglecomp.push_back(diff.count());
+    // std::cout << "SingleCompartment::update, " << diff.count() << std::endl;
 #endif
 
 }
 
-//------------------------------------------------------------------------------//
-
-
-CImg<double>* SingleCompartment::getOutput(){
-    return current_potential;
+CImg<double>* SingleCompartment::getOutput() {
+    return current_potential_;
 }

@@ -20,6 +20,10 @@ void DisplayManager::setLNFile(const string &file, double ampl) {
     LNfactor = ampl;
 }
 
+bool DisplayManager::hasLNFile() {
+    return LNFile != "";
+}
+
 void DisplayManager::reset() {
     columns_ = 1;
     rows_ = 1;
@@ -120,7 +124,9 @@ void DisplayManager::addMultimeter(string multimeterID, string moduleID, vector<
 }
 
 void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID, int param1, int param2,bool temporalSpatial, string Show) {
-    vector<int> aux{param1, param2};
+    vector<int> aux;
+    aux.push_back(param1);
+    aux.push_back(param2);
 
     MultimeterType mtype;
     if(temporalSpatial) {
@@ -135,7 +141,9 @@ void DisplayManager::addMultimeterTempSpat(string multimeterID, string moduleID,
 }
 
 void DisplayManager::addMultimeterLN(string multimeterID, string moduleID, int x, int y, double segment, double interval, double start, double stop, string Show) {
-    vector<int> aux{x, y};
+    vector<int> aux;
+    aux.push_back(x);
+    aux.push_back(y);
 
     LNSegment.push_back(segment);
     LNInterval.push_back(interval);
@@ -160,8 +168,6 @@ void DisplayManager::modifyLN(string moduleID, double start, double stop) {
 
 void DisplayManager::addDisplay(int pos, string ID) {
 #if cimg_display != 0
-    cout << "addDisplay " << pos << " " << ID << endl;
-
     // black image
     double newX = (double)columns_ * displayZoom;
     double newY = (double)rows_ * displayZoom;
@@ -207,7 +213,7 @@ void DisplayManager::addDisplay(int pos, string ID) {
 //------------------------------------------------------------------------------//
 
 
-void DisplayManager::updateDisplay(CImg <double> *input, vector<module *> &modules, double switchTime,
+void DisplayManager::updateDisplay(CImg <double> *input, vector<Module *> &modules, double switchTime,
                                    int simCurrTime, double simDuration, double numberTrials, double totalNumberTrials) {
 #if cimg_display != 0
     double scaledCols = (double)columns_ * displayZoom;
@@ -228,14 +234,12 @@ void DisplayManager::updateDisplay(CImg <double> *input, vector<module *> &modul
     // update multimeters
     for (unsigned int i = 0; i < multimeters.size(); i++){
         multimeter *m = multimeters[i];
-        module *n = nullptr;
+        Module *n = NULL;
         // find target module
         if(moduleIDs[i] != "Input") {
             for(unsigned int j = 1; j < modules.size(); j++){
                 n = modules[j];
-                if(n->checkID(moduleIDs[i])){
-                    break;
-                }
+                if (*modules[j] == moduleIDs[i]) break;
             }
         }
 

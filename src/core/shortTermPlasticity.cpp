@@ -1,89 +1,66 @@
 #include <COREM/core/shortTermPlasticity.h>
 
-ShortTermPlasticity::ShortTermPlasticity(int x,int y,double temporal_step,double Am,double Vm,double Em, double th, bool isTh){
-    slope = Am;
-    offset=Vm;
-    exponent = Em;
+ShortTermPlasticity::ShortTermPlasticity(std::string id, unsigned int columns, unsigned int rows,
+                                 double temporalStep, std::map<std::string, double> parameters,
+                                 double Am, double Vm, double Em, double th, bool isTh)
+    : Module(id, columns, rows, temporalStep, parameters) {
 
-    columns_ = x;
-    rows_ = y;
-    step = temporal_step;
+    slope_ = Am;
+    offset_ = Vm;
+    exponent_ = Em;
 
-    kf = 0.0;
-    kd = 0.0;
-    tau = 1.0;
-    VInf = 0.0;
+    kf_ = 0.0;
+    kd_ = 0.0;
+    tau_ = 1.0;
+    VInf_ = 0.0;
 
-    if(isTh){
-        isThreshold = true;
-        threshold = th;
-    }else{
-        isThreshold = false;
-        threshold = 0.0;
+    if (isTh) {
+        isThreshold_ = true;
+        threshold_ = th;
+    } else {
+        isThreshold_ = false;
+        threshold_ = 0.0;
     }
-}
 
-//------------------------------------------------------------------------------//
+    for(std::map<std::string, double>::const_iterator entry = parameters_.begin();
+        entry != parameters_.end(); ++entry) {
+        if (entry->first == "slope") slope_ = entry->second;
+        else if (entry->first == "offset") offset_ = entry->second;
+        else if (entry->first == "exponent") exponent_ = entry->second;
+        else if (entry->first == "threshold") threshold_ = entry->second;
+        else if (entry->first == "kf") kf_ = entry->second;
+        else if (entry->first == "kd") kd_ = entry->second;
+        else if (entry->first == "tau") tau_ = entry->second;
+        else if (entry->first == "VInf") VInf_ = entry->second;
+        else std::cerr << "ShortTermPlasticity(): You used an unrecognized parameter." << std::endl;
+    }
 
+    inputImage_ = new CImg<double>*[7];
 
-// Set functions
-
-void ShortTermPlasticity::setSlope(double s){
-    slope = s;
-}
-
-void ShortTermPlasticity::setOffset(double o){
-    offset = o;
-}
-
-void ShortTermPlasticity::setExponent(double e){
-    exponent = e;
-}
-
-void ShortTermPlasticity::setThreshold(double t){
-    threshold = t;
-    isThreshold = true;
-}
-
-void ShortTermPlasticity::setkf(double p1){
-    kf = p1;
-}
-
-void ShortTermPlasticity::setkd(double p2){
-    kd = p2;
-}
-
-void ShortTermPlasticity::setTau(double p3){
-    tau = p3;
-}
-
-void ShortTermPlasticity::setVInf(double p4){
-    VInf = p4;
-}
-
-//------------------------------------------------------------------------------//
-
-void ShortTermPlasticity::allocateValues(){
-    inputImage = new CImg<double>*[7];
-
-    for (int i=0;i<7;i++)
-      inputImage[i] = new CImg<double> (columns_, rows_, 1, 1, 0.0);
+    for (int i = 0; i < 7;i++)
+      inputImage_[i] = new CImg<double>(columns, rows, 1, 1, 0.0);
 
 
     // exp(-step/tau)
-    (inputImage[5])->fill(-step/tau);
-    (inputImage[5])->exp();
+    (inputImage_[5])->fill(-temporalStep_/tau_);
+    (inputImage_[5])->exp();
 
-    outputImage = new CImg<double> (columns_, rows_, 1, 1, 0.0);
-
+    outputImage_ = new CImg<double>(columns, rows, 1, 1, 0.0);
 }
 
-void ShortTermPlasticity::feedInput(const CImg<double>& new_input, bool, int) {
-    // copy input image
-    *inputImage[0] = new_input;
+ShortTermPlasticity::~ShortTermPlasticity() {
+    delete outputImage_;
+    for (int i = 0; i < 7; i++) delete inputImage_[i];
+    delete inputImage_;
 }
 
 void ShortTermPlasticity::update() {
+    // The module is not connected
+    if (this->source_ports.size() == 0)
+        return;
+
+    // copy input image
+    *(inputImage_[0]) = this->source_ports[0].getData();
 
     // kmInf = (Vinf/(kd*abs(input)))
     // km(t+1) = kmInf + [km(t) - kmInf]*exp(-step/tau)
@@ -98,95 +75,49 @@ void ShortTermPlasticity::update() {
     // ImagePointer[6] -> km(t-1)
 
     // km(t-1)
-    (*(inputImage[6]))=(*(inputImage[3]));
-    (*(inputImage[3])).fill(0.0);
+    (*(inputImage_[6]))=(*(inputImage_[3]));
+    (*(inputImage_[3])).fill(0.0);
 
     // abs(input)
-    *inputImage[1] = *inputImage[0];
-    (inputImage[1])->abs();
-    (*inputImage[1])+= DBL_EPSILON_STP;
+    *inputImage_[1] = *inputImage_[0];
+    (inputImage_[1])->abs();
+    (*inputImage_[1])+= DBL_EPSILON_STP;
 
     // kmInf
-    (inputImage[4])->fill(VInf);
-    (inputImage[4])->div(kd*(*(inputImage[1])));
+    (inputImage_[4])->fill(VInf_);
+    (inputImage_[4])->div(kd_*(*(inputImage_[1])));
 
     // update of km(t)
-    (*inputImage[3]) += (*inputImage[4]);
-    (*inputImage[3]) -= (*(inputImage[4])).mul(*(inputImage[5]));
-    (*inputImage[3]) += (*(inputImage[6])).mul(*(inputImage[5]));
+    (*inputImage_[3]) += (*inputImage_[4]);
+    (*inputImage_[3]) -= (*(inputImage_[4])).mul(*(inputImage_[5]));
+    (*inputImage_[3]) += (*(inputImage_[6])).mul(*(inputImage_[5]));
 
     // km(t)*abs(input)
-    (*inputImage[1]) = *inputImage[0];
-    (inputImage[1])->abs();
-    (inputImage[1])->mul(*inputImage[3]);
+    (*inputImage_[1]) = *inputImage_[0];
+    (inputImage_[1])->abs();
+    (inputImage_[1])->mul(*inputImage_[3]);
 
     // update of P
-    (*inputImage[2])+= kf*(*inputImage[1] - *inputImage[2]);
+    (*inputImage_[2])+= kf_*(*inputImage_[1] - *inputImage_[2]);
 
     // Threshold
-    if(isThreshold){
-        cimg_forXY((*inputImage[0]),x,y) {
-            if((*inputImage[0])(x,y,0,0) < threshold)
-                (*inputImage[0])(x,y,0,0) = threshold;
+    if(isThreshold_){
+        cimg_forXY((*inputImage_[0]), x, y) {
+            if((*inputImage_[0])(x, y, 0, 0) < threshold_)
+                (*inputImage_[0])(x, y, 0, 0) = threshold_;
         }
     }
 
 
     // slope, constant offset and exponent
-    (*inputImage[0])*=slope;
-    (*inputImage[0])+=offset;
-    (*inputImage[0])+=(*inputImage[2]);
-    inputImage[0]->pow(exponent);
+    (*inputImage_[0]) *= slope_;
+    (*inputImage_[0]) += offset_;
+    (*inputImage_[0]) += (*inputImage_[2]);
+    inputImage_[0]->pow(exponent_);
 
-    *outputImage = *inputImage[0];
-
-
+    *outputImage_ = *inputImage_[0];
 }
-
-//------------------------------------------------------------------------------//
-
-bool ShortTermPlasticity::setParameters(vector<double> params, vector<string> paramID) {
-
-    bool correct = true;
-
-    for (unsigned int i = 0;i<params.size();i++){
-        const char * s = paramID[i].c_str();
-
-        if (strcmp(s,"slope")==0){
-            slope = params[i];
-        }else if (strcmp(s,"offset")==0){
-            offset = params[i];
-        }else if (strcmp(s,"exponent")==0){
-            exponent = params[i];
-        }
-        else if (strcmp(s,"threshold")==0){
-            setThreshold(params[i]);
-        }
-        else if (strcmp(s,"kf")==0){
-            setkf(params[i]);
-        }
-        else if (strcmp(s,"kd")==0){
-            setkd(params[i]);
-        }
-        else if (strcmp(s,"tau")==0){
-            setTau(params[i]);
-        }
-        else if (strcmp(s,"VInf")==0){
-            setVInf(params[i]);
-        }
-        else{
-              correct = false;
-        }
-
-    }
-
-    return correct;
-
-}
-
-//------------------------------------------------------------------------------//
-
 
 CImg<double>* ShortTermPlasticity::getOutput() {
-    return outputImage;
+    return outputImage_;
 }
