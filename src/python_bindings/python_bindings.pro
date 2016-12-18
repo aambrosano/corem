@@ -29,16 +29,16 @@ win32 {
     CONFIG += dll
 
     QMAKE_LFLAGS += /LIBPATH:../../lib
-    QMAKE_LFLAGS += /LIBPATH:"$$_BOOST_LIBDIR" /LIBPATH:"C:\Python27-x64\libs" /FORCE:MULTIPLE
+    QMAKE_LFLAGS += /LIBPATH:"$$BOOST_LIBDIR" /LIBPATH:"C:\Python27\libs" /FORCE:MULTIPLE
 
     # Python extensions need pyd extensions from Python2.5 on
     QMAKE_EXTENSION_SHLIB = pyd
 
     LIBS += python27.lib retina.lib
     CONFIG(debug, debug|release) {
-        LIBS += boost_python-vc120-mt-gd-1_61.lib libboost_filesystem-vc120-mt-gd-1_61.lib
+        LIBS += libboost_python-vc140-mt-gd-1_61.lib libboost_filesystem-vc140-mt-gd-1_61.lib
     } else {
-        LIBS += boost_python-vc120-mt-1_61.lib libboost_filesystem-vc120-mt-1_61.lib
+        LIBS += libboost_python-vc140-mt-1_61.lib libboost_filesystem-vc140-mt-1_61.lib
     }
     LIBS += user32.lib gdi32.lib shell32.lib
 
@@ -50,14 +50,4 @@ HEADERS_ROOT = ../../include
 
 DESTDIR = ../../lib
 
-SOURCES = pyretina.cpp \
-    retinaLoader.cpp \
-    retinaWrapper.cpp
-
-HEADERS = \
-    $$HEADERS_ROOT/COREM/python_bindings/retinaLoader.h \
-    $$HEADERS_ROOT/COREM/python_bindings/retinaWrapper.h
-
-headers_files.files = $$HEADERS
-headers_files.path = $$INSTALL_PREFIX/include/COREM/python_bindings
-INSTALLS += headers_files
+SOURCES = pyretina.cpp

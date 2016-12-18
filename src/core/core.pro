@@ -26,13 +26,15 @@ win32 {
 
     DEFINES += EXPORTING_RETINA
 
-    QMAKE_LFLAGS += /LIBPATH:"C:\Python27-x64\libs"
+    QMAKE_LFLAGS += /LIBPATH:"C:\Python27\libs"
     LIBS += user32.lib gdi32.lib shell32.lib
 
+    QMAKE_LFLAGS += /LIBPATH:"$$BOOST_LIBDIR" /FORCE:MULTIPLE
+    message($$QMAKE_LFLAGS)
     CONFIG(debug, debug|release) {
-        LIBS += boost_python-vc120-mt-gd-1_61.lib
+        LIBS += libboost_python-vc140-mt-gd-1_61.lib libboost_filesystem-vc140-mt-gd-1_61.lib libboost_system-vc140-mt-gd-1_61.lib
     } else {
-        LIBS += boost_python-vc120-mt-1_61.lib
+        LIBS += libboost_python-vc140-mt-1_61.lib libboost_filesystem-vc140-mt-1_61.lib libboost_system-vc140-mt-1_61.lib
     }
 
     dlltarget.path += $$INSTALL_PREFIX/lib

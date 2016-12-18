@@ -66,6 +66,12 @@ BOOST_LIBDIR = $$(BOOST_LIBDIR)
 
 isEmpty(BOOST_LIBDIR) {
     message(Using default boost lib installation)
+    unix {
+        BOOST_LIBDIR = /usr/lib
+    }
+    win32 {
+        BOOST_LIBDIR = C:\Boost\lib
+    }
 } else {
     message(Detected custom boost lib installation in \"$$(BOOST_LIBDIR)\".)
     unix {

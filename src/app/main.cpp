@@ -58,8 +58,6 @@ CImg<double>* impulse_image(int width, int height) {
 
 int main(int argc, char *argv[])
 {
-    Py_Initialize();
-
     boost::filesystem::path currentDirRoot(boost::filesystem::current_path());
 
     // delete files in results folder (if any)
@@ -82,9 +80,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    Retina retina(1, 1, 1.0);
+    Retina retina;
     retina.loadCircuit(retinaPath.string());
-    retina.allocateValues();
     retina.displayMg.setLNFile(constants::resultID, constants::outputfactor);
 
     CImg<double> inputImg;
@@ -104,8 +101,6 @@ int main(int argc, char *argv[])
         }
         retina.update();
     }
-
-    Py_Finalize();
 
     return 0;
 }

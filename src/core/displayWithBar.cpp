@@ -49,7 +49,7 @@ void DisplayWithBar::updateBar(double min, double max) {
     // Draw min label
     string minString;
 
-    if (min < 100) { minString = boost::lexical_cast<string>(min).substr(0, 4); }
+    if (min < 100) { minString = boost::lexical_cast<string>(min).substr(0, 6); }
     else { minString = boost::lexical_cast<string>((int)min); }
 
     bar->draw_text(5, bar->height() - 20, minString.c_str(), colorWhite, 0, 1, 20);
@@ -57,7 +57,7 @@ void DisplayWithBar::updateBar(double min, double max) {
     // Draw max label
     string maxString;
 
-    if (max < 100) { maxString = boost::lexical_cast<string>(max).substr(0, 4); }
+    if (max < 100) { maxString = boost::lexical_cast<string>(max).substr(0, 6); }
     else { maxString = boost::lexical_cast<string>((int)max); }
 
     bar->draw_text(5, 10, maxString.c_str(), colorWhite, 0, 1, 20);

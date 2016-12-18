@@ -24,11 +24,11 @@
 #include "gratingGenerator.h"
 #include "fixationalMovGrating.h"
 #include "whiteNoise.h"
+#include "staticNonLinearity.h"
+#include "shortTermPlasticity.h"
 #include "impulse.h"
 #include "displayManager.h"
 #include "constants.h"
-
-#include <COREM/python_bindings/retinaLoader.h>
 
 #include <boost/python.hpp>
 #include <boost/filesystem.hpp>
@@ -84,6 +84,7 @@ public:
 
     // Constructor, copy, destructor.
     Retina(int columns=1, int rows=1, double temporal_step=1.0);
+    Retina(const Retina& copy) : Retina(copy.columns_, copy.rows_, copy.simStep) {}
 
     void reset(int columns=1, int rows=1, double temporal_step=1.0);
 
@@ -145,6 +146,31 @@ public:
     void loadCircuit(std::string retinaPath);
     //
     double getValue(int cell, std::string layer="Output");
+
+    // Python interface
+    void Py_TempStep(double);
+    void Py_SimTime(int);
+    void Py_NumTrials(double);
+    void Py_PixelsPerDegree(double);
+    void Py_NRepetitions(double);
+    void Py_DisplayDelay(int);
+    void Py_DisplayZoom(double);
+    void Py_DisplayWindows(int);
+
+    void Py_Input(std::string, py::dict);
+    void Py_Create(std::string, std::string, py::dict);
+    void Py_Connect(py::object, std::string, std::string);
+    void Py_Show(std::string, bool, py::dict);
+    void Py_Multimeter(std::string, std::string, std::string, py::dict, bool);
+
+    void Py_Update(const py::object&);
+    double Py_GetValue(int row, int col, string layer="Output");
+
+private:
+    CImg<double>* convertImage(const boost::python::api::object& img);
+    CImg<double>* convertndarray(const boost::python::api::object& img);
 };
+
+EXPORT void define_retina_python();
 
 #endif // RETINA_H
