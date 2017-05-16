@@ -4,8 +4,10 @@
 /* BeginDocumentation
  * Name: GaussFilter
  *
- * Description: Gaussian convolution to reproduce spatial integration in chemical
- * and gap-junction synapses. It implements a recursive infinite-impulse-response
+ * Description: Gaussian convolution to reproduce spatial integration in
+ *chemical
+ * and gap-junction synapses. It implements a recursive
+ *infinite-impulse-response
  * (IIR) filter based on the Deriche's algorithm. Based on [1,2]. OpenMP is used
  * for multithreading
  *
@@ -25,21 +27,14 @@
  * SeeAlso:
  */
 
-#ifdef DEBUG
-#include <boost/chrono.hpp>
-
-namespace bchrono = boost::chrono;
-#endif
-
 #include <CImg.h>
 #include <omp.h>
-#include "module.h"
-#include "constants.h"
+#include "../constants.h"
+#include "../module.h"
 
-class EXPORT GaussFilter: public Module {
-public:
-    GaussFilter(std::string id, unsigned int columns, unsigned int rows, double temporalStep,
-                std::map<std::string, double> parameters, double pixelsPerDegree);
+class EXPORT GaussFilter : public Module {
+   public:
+    GaussFilter(std::string id, retina_config_t *conf, double sigma);
     GaussFilter(const GaussFilter &copy);
     ~GaussFilter();
 
@@ -48,17 +43,9 @@ public:
 
     // Fast filtering with constant sigma
     void gaussHorizontal(CImg<double> &src);
-    void gaussVertical(CImg <double> &src);
-    void gaussFiltering(CImg<double> &src);
+    void gaussVertical(CImg<double> &src);
 
-    // Fast filtering with space-variant sigma
-    void spaceVariantGaussHorizontal(CImg<double> &src);
-    void spaceVariantGaussVertical(CImg<double> &src);
-    void spaceVariantGaussFiltering(CImg<double> &src);
-
-    double density(double r);
-
-protected:
+   protected:
     // Filter parameters
     double sigma_;
     double *buffer_;
@@ -73,21 +60,9 @@ protected:
 
     // Matrices
     double M_[3][3];
-    CImg<double> q_m_;
-    CImg<double> b0_m_;
-    CImg<double> b1_m_;
-    CImg<double> b2_m_;
-    CImg<double> b3_m_;
-    CImg<double> B_m_;
-    CImg<double> M_m_;
-
-    // spaceVariantSigma
-    bool spaceVariantSigma_;
-    double R0_;
-    double K_;
 
     CImg<double> *inputImage_;
     CImg<double> *outputImage_;
 };
 
-#endif // COREM_GAUSSFILTER_H
+#endif  // COREM_GAUSSFILTER_H

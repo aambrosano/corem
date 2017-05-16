@@ -6,7 +6,7 @@ DESTDIR = ../../bin
 
 unix {
     QMAKE_LFLAGS += -Wl,-rpath,\'\$$ORIGIN/../lib\'
-    LIBS += -lX11 -L../../lib/ -lretina -lboost_python -lboost_filesystem -lboost_system -lboost_chrono -lpthread -fopenmp
+    LIBS += -lX11 -L../../lib/ -lretina -lboost_python -lboost_filesystem -lboost_system -lboost_chrono -lpthread -fopenmp -lboost_iostreams
 
     CONFIG(debug, debug|release) {
         target.path += $$INSTALL_PREFIX/lib/debug/usr/bin

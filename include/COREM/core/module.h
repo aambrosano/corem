@@ -1,11 +1,12 @@
 #ifndef COREM_MODULE_H
 #define COREM_MODULE_H
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 #include <CImg.h>
+#include <COREM/core/displayWithBar.h>
 
 #include "constants.h"
 
@@ -15,8 +16,9 @@ enum SynapseType { CURRENT, CURRENT_INHIB, CONDUCTANCE, CONDUCTANCE_INHIB };
 enum Operation { ADD, SUB };
 
 class ModulePort {
-public:
-    ModulePort(std::vector<std::string> sources, std::vector<Operation> operations, SynapseType synapseType);
+   public:
+    ModulePort(std::vector<std::string> sources,
+               std::vector<Operation> operations, SynapseType synapseType);
 
     std::vector<std::string> getSources();
     std::vector<Operation> getOperations();
@@ -24,7 +26,7 @@ public:
     void update(CImg<double> input);
     const CImg<double> getData();
 
-protected:
+   protected:
     std::vector<std::string> sources_;
     std::vector<Operation> operations_;
     SynapseType type_;
@@ -32,29 +34,23 @@ protected:
 };
 
 class EXPORT Module {
-public:
-    Module(std::string id, unsigned int columns, unsigned int rows, double temporalStep,
-           std::map<std::string, double> parameters);
+   public:
+    Module(std::string id, retina_config_t *conf);
 
-    void setSize(unsigned int columns, unsigned int rows);
-
-    // TODO: find a way to remove isCurrent and port, as they are only used in
-    // SingleCompartment()
     virtual void update() {}
-    virtual CImg<double> *getOutput() { return NULL; }
+    virtual CImg<double> *getOutput() = 0;
 
-    void addSource(Module *sourceModule, Operation operation, SynapseType synapse);
-    bool operator==(std::string s);
+    void addSource(Module *sourceModule, Operation operation,
+                   SynapseType synapse);
 
-    std::string getID();
-
-    unsigned int columns, rows;
+    std::string id();
     std::vector<ModulePort> source_ports;
 
-protected:
+   protected:
+    retina_config_t *config;
     std::string id_;
-    double temporalStep_;
-    std::map<std::string, double> parameters_;
+    unsigned int columns;
+    unsigned int rows;
 };
 
-#endif // COREM_MODULE_H
+#endif  // COREM_MODULE_H

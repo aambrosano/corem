@@ -8,7 +8,7 @@ unix {
 
     QMAKE_LFLAGS += -shared
     LIBS += -lX11 -lpthread -fopenmp
-    LIBS += -lboost_python -lboost_filesystem -lboost_system -lboost_chrono
+    LIBS += -lboost_python -lboost_filesystem -lboost_system -lboost_chrono -lboost_iostreams
 
     CONFIG(debug, debug|release) {
         target.path += $$INSTALL_PREFIX/lib/debug/usr/lib
@@ -42,40 +42,60 @@ win32 {
 }
 
 DESTDIR = ../../lib
+message($$DESTDIR)
 
 SOURCES = \
-    multimeter.cpp \
-    module.cpp \
-    whiteNoise.cpp \
-    impulse.cpp \
-    fixationalMovGrating.cpp \
+    input/fixationalMovGrating.cpp \
+    input/gratingGenerator.cpp \
+    input/impulse.cpp \
+    input/whiteNoise.cpp \
+    input/sequence.cpp \
+    input/image.cpp \
+    module/gaussFilter.cpp \
+    module/linearFilter.cpp \
+    module/shortTermPlasticity.cpp \
+    module/singleCompartment.cpp \
+    module/staticNonLinearity.cpp \
     constants.cpp \
     displayManager.cpp \
     displayWithBar.cpp \
-    gaussFilter.cpp \
-    gratingGenerator.cpp \
-    linearFilter.cpp \
+    input.cpp \
+    module.cpp \
+    multimeter.cpp \
     retina.cpp \
-    shortTermPlasticity.cpp \
-    staticNonLinearity.cpp \
-    singleCompartment.cpp
+    module/parrot.cpp \
+    multimeter/spatialMultimeter.cpp \
+    multimeter/temporalMultimeter.cpp \
+    multimeter/LNMultimeter.cpp \
+    module/customNonLinearity.cpp \
+    module/spaceVariantGaussFilter.cpp \
+    pyretina.cpp
 
 HEADERS = \
     $$HEADERS_ROOT/COREM/core/multimeter.h \
     $$HEADERS_ROOT/COREM/core/module.h \
-    $$HEADERS_ROOT/COREM/core/whiteNoise.h \
-    $$HEADERS_ROOT/COREM/core/impulse.h \
-    $$HEADERS_ROOT/COREM/core/fixationalMovGrating.h \
+    $$HEADERS_ROOT/COREM/core/input/whiteNoise.h \
+    $$HEADERS_ROOT/COREM/core/input/impulse.h \
+    $$HEADERS_ROOT/COREM/core/input/fixationalMovGrating.h \
     $$HEADERS_ROOT/COREM/core/constants.h \
     $$HEADERS_ROOT/COREM/core/displayManager.h \
     $$HEADERS_ROOT/COREM/core/displayWithBar.h \
-    $$HEADERS_ROOT/COREM/core/gaussFilter.h \
-    $$HEADERS_ROOT/COREM/core/gratingGenerator.h \
-    $$HEADERS_ROOT/COREM/core/linearFilter.h \
+    $$HEADERS_ROOT/COREM/core/module/gaussFilter.h \
+    $$HEADERS_ROOT/COREM/core/input/gratingGenerator.h \
+    $$HEADERS_ROOT/COREM/core/input/sequence.h \
+    $$HEADERS_ROOT/COREM/core/input/image.h \
+    $$HEADERS_ROOT/COREM/core/module/linearFilter.h \
     $$HEADERS_ROOT/COREM/core/retina.h \
-    $$HEADERS_ROOT/COREM/core/shortTermPlasticity.h \
-    $$HEADERS_ROOT/COREM/core/singleCompartment.h \
-    $$HEADERS_ROOT/COREM/core/staticNonLinearity.h
+    $$HEADERS_ROOT/COREM/core/module/shortTermPlasticity.h \
+    $$HEADERS_ROOT/COREM/core/module/singleCompartment.h \
+    $$HEADERS_ROOT/COREM/core/module/staticNonLinearity.h \
+    $$HEADERS_ROOT/COREM/core/input.h \
+    $$HEADERS_ROOT/COREM/core/module/parrot.h \
+    $$HEADERS_ROOT/COREM/core/multimeter/spatialMultimeter.h \
+    $$HEADERS_ROOT/COREM/core/multimeter/temporalMultimeter.h \
+    $$HEADERS_ROOT/COREM/core/multimeter/LNMultimeter.h \
+    ../../include/COREM/core/module/customNonLinearity.h \
+    ../../include/COREM/core/module/spaceVariantGaussFilter.h
 
 headers_files.files = $$HEADERS
 headers_files.path = $$INSTALL_PREFIX/include/COREM/core

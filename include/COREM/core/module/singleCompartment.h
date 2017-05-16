@@ -20,27 +20,27 @@
 namespace bchrono = boost::chrono;
 #endif
 
-#include "module.h"
-#include "constants.h"
+#include "../constants.h"
+#include "../module.h"
 
 class EXPORT SingleCompartment : public Module {
-public:
-    // Constructor, copy, destructor.
-    SingleCompartment(std::string id, unsigned int columns, unsigned int rows, double temporalStep,
-                      std::map<std::string, double> parameters);
+   public:
+    SingleCompartment(std::string id, retina_config_t *conf,
+                      unsigned int current_ports,
+                      unsigned int conductance_ports, double Rm, double tau,
+                      double Cm, std::vector<double> E);
     SingleCompartment(const SingleCompartment &copy);
     ~SingleCompartment();
 
     virtual void update();
-    virtual CImg<double>* getOutput();
+    virtual CImg<double> *getOutput();
 
-protected:
+   protected:
     // image buffers
-    CImg<double>** conductances_;
-    CImg<double>** currents_;
+    CImg<double> **conductances_;
+    CImg<double> **currents_;
     int number_current_ports_;
     int number_conductance_ports_;
-    int update_count_;
     // Nernst potentials
     std::vector<double> E_;
     // membrane capacitance, resistance and tau
@@ -57,4 +57,4 @@ protected:
     CImg<double> *exp_term_;
 };
 
-#endif // SINGLECOMPARTMENT_H
+#endif  // SINGLECOMPARTMENT_H

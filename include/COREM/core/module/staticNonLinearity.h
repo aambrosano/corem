@@ -13,40 +13,36 @@
  */
 
 #include <CImg.h>
+#include <limits>
 
-#include "module.h"
-#include "constants.h"
+#include "../constants.h"
+#include "../module.h"
 
 using namespace cimg_library;
 
 class EXPORT StaticNonLinearity : public Module {
-public:
-    StaticNonLinearity(std::string id, unsigned int columns, unsigned int rows,
-                       double temporalStep, std::map<std::string, double> parameters,
-                       int type);
+   public:
+    StaticNonLinearity(std::string id, retina_config_t *conf, unsigned int type,
+                       double slope, double offset, double exponent,
+                       double threshold);
     StaticNonLinearity(const StaticNonLinearity &copy);
     ~StaticNonLinearity();
 
     virtual void update();
-    virtual CImg<double>* getOutput();
+    virtual CImg<double> *getOutput();
 
-    template <typename T> int sgn(T val);
+    template <typename T>
+    int sgn(T val);
 
-protected:
+   protected:
     // type of nonlinearity
     int type_;
 
     // nonlinearity parameters
-    std::vector<double> slope_;
-    std::vector<double> offset_;
-    std::vector<double> exponent_;
-    std::vector<double> threshold_;
-
-    // for the piecewise function
-    std::vector<double> start_;
-    std::vector<double> end_;
-
-    bool isThreshold_;
+    double slope_;
+    double offset_;
+    double exponent_;
+    double threshold_;
 
     // buffers
     CImg<double> *inputImage_;
@@ -54,4 +50,4 @@ protected:
     CImg<double> *markers_;
 };
 
-#endif // COREM_STATICNONLINEARITY_H
+#endif  // COREM_STATICNONLINEARITY_H

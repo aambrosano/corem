@@ -10,9 +10,10 @@ using namespace std;
 using namespace cimg_library;
 
 class DisplayWithBar {
-private:
-    CImgDisplay display;
-    CImg<double>* bar;
+   private:
+   public:
+    CImgDisplay display, d;
+    CImg<double> *bar;
 
     int columns_, rows_;
     int margin_;
@@ -24,8 +25,9 @@ private:
     double findMax(CImg<double> *input);
     void updateBar(double min, double max);
 
-public:
-    DisplayWithBar(string name, int columns, int rows, bool withBar=true, int barSize=50, bool trueColor=false);
+   public:
+    DisplayWithBar(string name, int columns, int rows, bool withBar = true,
+                   int barSize = 50, bool trueColor = false);
 
     void setMargin(int margin) { margin_ = margin; }
 
@@ -36,4 +38,4 @@ public:
     void wait(unsigned int delay) { display.wait(delay); }
 };
 
-#endif // DISPLAYWITHBAR_H
+#endif  // DISPLAYWITHBAR_H

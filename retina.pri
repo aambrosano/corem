@@ -6,7 +6,7 @@ QT -= gui
 QT -= core
 
 INCLUDEPATH += $$PWD/include
-INCLUDEPATH += $$PWD/CImg-1.6.0_rolling141127
+# INCLUDEPATH += $$PWD/CImg-1.6.0_rolling141127
 
 DEFINES += DEBUG
 
@@ -19,6 +19,7 @@ unix {
     CONFIG += link_pkgconfig
     PKGCONFIG += python2
     QMAKE_CXXFLAGS += -fPIC -fopenmp -std=c++03
+    QMAKE_CXXFLAGS += -isystem $$PWD/CImg-1.6.0_rolling141127
     QMAKE_CXXFLAGS_RELEASE -= -O2
     QMAKE_CXXFLAGS_RELEASE += -O3
     message($$QMAKE_CXXFLAGS)
@@ -26,6 +27,7 @@ unix {
 
 win32 {
     INCLUDEPATH += C:\Python27\include
+    INCLUDEPATH += $$PWD/CImg-1.6.0_rolling141127
     QMAKE_CXXFLAGS += /openmp
     # For non-wide char
     DEFINES -= UNICODE
@@ -86,3 +88,5 @@ isEmpty(BOOST_LIBDIR) {
         QMAKE_LFLAGS += /LIBPATH:"$$BOOST_LIBDIR"
     }
 }
+
+HEADERS +=

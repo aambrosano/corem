@@ -12,30 +12,30 @@
  * SeeAlso: module
  */
 
-#include "module.h"
+#include "../module.h"
+
+#include <limits>
 
 #define DBL_EPSILON_STP 1.0e-2
 
 class EXPORT ShortTermPlasticity : public Module {
-public:
+   public:
     // TODO: move Am, Vm, Em, th and isTh to parameters
-    ShortTermPlasticity(std::string id, unsigned int columns, unsigned int rows,
-                        double temporalStep, std::map<std::string, double> parameters,
-                        double Am=1.0, double Vm=0.0, double Em=1.0, double th=0.0,
-                        bool isTh=false);
+    ShortTermPlasticity(std::string id, retina_config_t *conf, double slope,
+                        double offset, double exponent, double kf, double kd,
+                        double tau, double vinf, double threshold);
     ShortTermPlasticity(const ShortTermPlasticity &copy);
     ~ShortTermPlasticity();
 
     virtual void update();
-    virtual CImg<double>* getOutput();
+    virtual CImg<double> *getOutput();
 
-protected:
+   protected:
     // nonlinearity parameters
     double slope_;
     double offset_;
     double exponent_;
     double threshold_;
-    bool isThreshold_;
     // STP parameters
     double kf_;
     double kd_;
@@ -46,4 +46,4 @@ protected:
     CImg<double> *outputImage_;
 };
 
-#endif // COREM_SHORTTERMPLASTICITY_H
+#endif  // COREM_SHORTTERMPLASTICITY_H

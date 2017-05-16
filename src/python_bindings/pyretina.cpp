@@ -3,7 +3,4 @@
 
 #define BOOST_PYTHON_STATIC_LIB
 
-BOOST_PYTHON_MODULE(pyretina)
-{
-    define_retina_python();
-}
+BOOST_PYTHON_MODULE(pyretina) { define_retina_python(); }
