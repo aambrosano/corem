@@ -6,8 +6,6 @@ QT -= gui
 QT -= core
 
 INCLUDEPATH += $$PWD/include
-# INCLUDEPATH += $$PWD/CImg-1.6.0_rolling141127
-
 DEFINES += DEBUG
 
 if (nodisplay) {
@@ -18,10 +16,14 @@ unix {
     # Find python-devel with pkg-config
     CONFIG += link_pkgconfig
     PKGCONFIG += python2
-    QMAKE_CXXFLAGS += -fPIC -fopenmp -std=c++03
-    QMAKE_CXXFLAGS += -isystem $$PWD/CImg-1.6.0_rolling141127
+    #QMAKE_CXX = g++-4.8
+    QMAKE_CXXFLAGS += -fPIC -fopenmp -std=c++03 -m64
+    #QMAKE_CXXFLAGS += -isystem $$PWD/CImg-1.6.0_rolling141127
     QMAKE_CXXFLAGS_RELEASE -= -O2
     QMAKE_CXXFLAGS_RELEASE += -O3
+    QMAKE_LFLAGS_DEBUG += # -fsanitize=thread -lasan
+    QMAKE_CXXFLAGS_DEBUG -= -O2
+    QMAKE_CXXFLAGS_DEBUG += -O -g # -fsanitize=thread -fno-omit-frame-pointer -fPIC -lasan
     message($$QMAKE_CXXFLAGS)
 }
 
@@ -88,5 +90,3 @@ isEmpty(BOOST_LIBDIR) {
         QMAKE_LFLAGS += /LIBPATH:"$$BOOST_LIBDIR"
     }
 }
-
-HEADERS +=

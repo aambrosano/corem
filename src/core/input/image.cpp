@@ -1,40 +1,36 @@
-#include "COREM/core/input/image.h"
+#include <corem/input/image.h>
 
 #include <boost/filesystem.hpp>
 
 namespace fs = boost::filesystem;
 
-const std::map<std::string, param_val_t> ImageSource::defaultParams =
-    ImageSource::createDefaults();
-
-std::map<std::string, param_val_t> ImageSource::createDefaults() {
-    std::map<std::string, param_val_t> ret;
-    ret["path"].s = new std::string(".");
-    return ret;
-}
-
-ImageSource::ImageSource(unsigned int columns, unsigned int rows,
+ImageSource::ImageSource(int columns, int rows,
                          std::map<std::string, param_val_t> params)
-    : Input(columns, rows, params, "ImageSource") {
-    std::string path = *getParam("path", params, defaultParams).s;
-    if (!fs::exists(path) || !fs::is_regular_file(path))
+    : Input(columns, rows, params) {
+    std::string *path = getParam("path", params).s;
+    if (!fs::exists(*path) || !fs::is_regular_file(*path))
         throw std::runtime_error(
-            (new std::string("File " + path + " not found or invalid."))
+            (new std::string("File " + *path + " not found or invalid."))
                 ->c_str());
 
     input = new CImg<double>;
-    input->assign(path.c_str());
+    input->assign(path->c_str());
 
     this->columns = input->width();
     this->rows = input->height();
+    delete path;
 }
 
-CImg<double> *ImageSource::getData(unsigned int t) {
-    // q.display(*input);
+ImageSource::~ImageSource() {
+    if (input != NULL) delete input;
+}
+
+const CImg<double> *ImageSource::getData(int t) {
+    UNUSED(t);  // The input is constant so t is not necessary here
     return input;
 }
 
-void ImageSource::getSize(unsigned int &columns_, unsigned int &rows_) {
+void ImageSource::getSize(int &columns_, int &rows_) const {
     columns_ = this->columns;
     rows_ = this->rows;
 }

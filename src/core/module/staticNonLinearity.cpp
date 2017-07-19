@@ -1,4 +1,4 @@
-#include <COREM/core/module/staticNonLinearity.h>
+#include <corem/module/staticNonLinearity.h>
 
 StaticNonLinearity::StaticNonLinearity(std::string id, retina_config_t *conf,
                                        unsigned int type, double slope,
@@ -23,11 +23,13 @@ StaticNonLinearity::~StaticNonLinearity() {
 }
 
 void StaticNonLinearity::update() {
+    c_begin = clock();
+    b_begin = boost::chrono::system_clock::now();
     // The module is not connected
     if (this->source_ports.size() == 0) return;
 
     // copy input image
-    *inputImage_ = this->source_ports[0].getData();
+    inputImage_->assign(*(this->source_ports[0].getData()));
     // polynomial function
     if (type_ == 0) {
         if (threshold_ != std::numeric_limits<double>::infinity()) {
@@ -63,9 +65,16 @@ void StaticNonLinearity::update() {
     }
 
     *outputImage_ = *inputImage_;
+    c_end = clock();
+    b_end = boost::chrono::system_clock::now();
+    this->elapsed_time += double(c_end - c_begin) / CLOCKS_PER_SEC;
+    this->elapsed_wall_time +=
+        ((boost::chrono::duration<double>)(b_end - b_begin)).count();
 }
 
-CImg<double> *StaticNonLinearity::getOutput() { return outputImage_; }
+const CImg<double> *StaticNonLinearity::getOutput() const {
+    return outputImage_;
+}
 
 template <typename T>
 int StaticNonLinearity::sgn(T val) {

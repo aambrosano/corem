@@ -1,16 +1,16 @@
-#include <COREM/core/module/shortTermPlasticity.h>
+#include <corem/module/shortTermPlasticity.h>
 #include <limits>
 
 ShortTermPlasticity::ShortTermPlasticity(std::string id, retina_config_t *conf,
                                          double slope, double offset,
-                                         double exponent, double kf, double kd,
-                                         double tau, double vinf,
-                                         double threshold)
+                                         double exponent, double threshold,
+                                         double kf, double kd, double tau,
+                                         double vinf)
     : Module(id, conf),
-      threshold_(threshold),
       slope_(slope),
       offset_(offset),
       exponent_(exponent),
+      threshold_(threshold),
       kf_(kf),
       kd_(kd),
       tau_(tau),
@@ -36,11 +36,13 @@ ShortTermPlasticity::~ShortTermPlasticity() {
 }
 
 void ShortTermPlasticity::update() {
-    // The module is not connected
+    c_begin = clock();
+    b_begin =
+        boost::chrono::system_clock::now();  // The module is not connected
     if (this->source_ports.size() == 0) return;
 
     // copy input image
-    *(inputImage_[0]) = this->source_ports[0].getData();
+    (inputImage_[0])->assign(*(this->source_ports[0].getData()));
 
     // kmInf = (Vinf/(kd*abs(input)))
     // km(t+1) = kmInf + [km(t) - kmInf]*exp(-step/tau)
@@ -95,6 +97,13 @@ void ShortTermPlasticity::update() {
     inputImage_[0]->pow(exponent_);
 
     *outputImage_ = *inputImage_[0];
+    c_end = clock();
+    b_end = boost::chrono::system_clock::now();
+    this->elapsed_time += double(c_end - c_begin) / CLOCKS_PER_SEC;
+    this->elapsed_wall_time +=
+        ((boost::chrono::duration<double>)(b_end - b_begin)).count();
 }
 
-CImg<double> *ShortTermPlasticity::getOutput() { return outputImage_; }
+const CImg<double> *ShortTermPlasticity::getOutput() const {
+    return outputImage_;
+}

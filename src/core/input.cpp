@@ -1,5 +1,8 @@
-#include "COREM/core/input.h"
+#include <corem/input.h>
 
-Input::Input(unsigned int columns, unsigned int rows,
-             std::map<std::string, param_val_t> params, std::string input_type)
-    : columns(columns), rows(rows), input_type(input_type) {}
+Input::Input(int columns, int rows, std::map<std::string, param_val_t> params)
+    : columns(columns), rows(rows) {
+    UNUSED(params)  // Will be use by subclasses
+}
+
+Input::~Input() {}

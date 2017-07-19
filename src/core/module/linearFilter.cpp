@@ -1,4 +1,4 @@
-#include <COREM/core/module/linearFilter.h>
+#include <corem/module/linearFilter.h>
 #include <cassert>
 
 LinearFilter::LinearFilter(std::string id, retina_config_t *conf, double tau,
@@ -111,10 +111,12 @@ void LinearFilter::gamma(double tau, double n) {
 }
 
 void LinearFilter::update() {
+    c_begin = clock();
+    b_begin = boost::chrono::system_clock::now();
     // The module is not connected
     if (this->source_ports.size() == 0) return;
 
-    *(last_inputs[0]) = this->source_ports[0].getData();
+    (last_inputs[0])->assign(*(this->source_ports[0].getData()));
 
     // Rotation on addresses of the last_values.
     CImg<double> *fakepoint = last_values[N];
@@ -123,19 +125,46 @@ void LinearFilter::update() {
     }
     last_values[0] = fakepoint;
 
+    last_values[0]->fill(0.0);
     // Calculating new value of filter recursively:
-    *(last_values[0]) = b[0] * (*(last_inputs[0]));
-    for (int j = 1; j < M; j++) {
-        *(last_values[0]) += (b[j] * (*(last_inputs[j])));
-    }
-    for (int k = 1; k < N + 1; k++) {
-        *(last_values[0]) -= (a[k] * (*(last_values[k])));
-    }
-    (*(last_values[0])) /= a[0];
 
+    for (int k = 0; k < M; k++) {
+        for (int i = 0; i < (int)last_values[0]->size(); i++) {
+            last_values[0]->_data[i] += b[k] * last_inputs[k]->_data[i];
+        }
+    }
+
+    for (int k = 1; k < N + 1; k++) {
+        for (int i = 0; i < (int)last_values[0]->size(); i++) {
+            last_values[0]->_data[i] -= a[k] * last_values[k]->_data[i];
+        }
+    }
+
+    for (int i = 0; i < (int)last_values[0]->size(); i++) {
+        last_values[0]->_data[i] *= 1 / a[0];
+    }
+
+    //*(last_values[0]) = b[0] * (*(last_inputs[0]));
+    //    for (int j = 0; j < M; j++) {
+    //        *(last_values[0]) += (b[j] * (*(last_inputs[j])));
+    //    }
+    //    //#pragma omp parallel for num_threads(2)
+    //    for (int k = 1; k < N + 1; k++) {
+    //        *(last_values[0]) -= (a[k] * (*(last_values[k])));
+    //    }
+    //    (*(last_values[0])) /= a[0];
+
+    CImg<double> *tmp = last_inputs[M - 1];
     for (int i = 1; i < M; ++i) {
         last_inputs[M - i] = last_inputs[M - i - 1];
     }
+    last_inputs[0] = tmp;
+
+    c_end = clock();
+    b_end = boost::chrono::system_clock::now();
+    this->elapsed_time += double(c_end - c_begin) / CLOCKS_PER_SEC;
+    this->elapsed_wall_time +=
+        ((boost::chrono::duration<double>)(b_end - b_begin)).count();
 }
 
-CImg<double> *LinearFilter::getOutput() { return last_values[0]; }
+const CImg<double> *LinearFilter::getOutput() const { return last_values[0]; }

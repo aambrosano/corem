@@ -1,10 +1,9 @@
-#include "COREM/core/multimeter/LNMultimeter.h"
+#include <corem/multimeter/LNMultimeter.h>
 
-LNMultimeter::LNMultimeter(unsigned int columns, unsigned int rows,
-                           retina_config_t *conf, std::string id,
-                           unsigned int timeToShow, unsigned int x,
-                           unsigned int y, double segment, double interval,
-                           double start, double stop)
+LNMultimeter::LNMultimeter(int columns, int rows, retina_config_t *conf,
+                           std::string id, int timeToShow, int x, int y,
+                           double segment, double interval, double start,
+                           double stop)
     : Multimeter(columns, rows, conf, id, timeToShow),
       callCount(0),
       x(x),
@@ -204,7 +203,9 @@ void LNMultimeter::show(int waitTime) {
     }
 }
 
-void LNMultimeter::showGP(unsigned int wat) {}
+void LNMultimeter::showGP(int wat) {
+    UNUSED(wat);  // TODO: implement multimeter
+}
 void LNMultimeter::showAvgGP() {}
 void LNMultimeter::dump(std::string) {}
 
@@ -509,18 +510,21 @@ void LNMultimeter::fft(double data[], int nn, int isign) {
      Inputs:
         data[] : array of complex* data points of size 2*NFFT+1.
             data[0] is unused,
-            * the n'th complex number x(n), for 0 <= n <= length(x)-1, is stored
+            * the n'th complex number x(n), for 0 <= n <= length(x)-1, is
+     stored
      as:
                 data[2*n+1] = real(x(n))
                 data[2*n+2] = imag(x(n))
-            if length(Nx) < NFFT, the remainder of the array must be padded with
+            if length(Nx) < NFFT, the remainder of the array must be padded
+     with
      zeros
 
         nn : FFT order NFFT. This MUST be a power of 2 and >= length(x).
         isign:  if set to 1,
                     computes the forward FFT
                 if set to -1,
-                    computes Inverse FFT - in this case the output values have
+                    computes Inverse FFT - in this case the output values
+     have
                     to be manually normalized by multiplying with 1/NFFT.
      Outputs:
         data[] : The FFT or IFFT results are stored in data, overwriting the

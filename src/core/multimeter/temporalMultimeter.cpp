@@ -1,16 +1,16 @@
-#include "COREM/core/multimeter/temporalMultimeter.h"
+#include <corem/multimeter/temporalMultimeter.h>
 
-TemporalMultimeter::TemporalMultimeter(unsigned int columns, unsigned int rows,
+TemporalMultimeter::TemporalMultimeter(int columns, int rows,
                                        retina_config_t *conf, std::string id,
-                                       unsigned int timeToShow, unsigned int x,
-                                       unsigned int y, unsigned int sim_step)
+                                       int timeToShow, int x, int y,
+                                       int sim_step)
     : Multimeter(columns, rows, conf, id, timeToShow),
       x(x),
       y(y),
       sim_step(sim_step) {}
 
 void TemporalMultimeter::record(/* CImg<double> *image */) {
-    CImg<double> *image;
+    const CImg<double> *image;
     if (this->source_module != NULL)
         image = this->source_module->getOutput();
     else
@@ -31,7 +31,9 @@ void TemporalMultimeter::record(/* CImg<double> *image */) {
     this->data.push_back(val);
 }
 
-void TemporalMultimeter::showGP(unsigned int start_from) {
+void TemporalMultimeter::showGP(int start_from) {
+    assert(start_from >= 0);
+
     if (!this->showable) {
         std::cerr << "Warning: this multimeter is not showable, terminating."
                   << std::endl;
@@ -67,7 +69,7 @@ void TemporalMultimeter::showGP(unsigned int start_from) {
 
 void TemporalMultimeter::dump(std::string filename) {
     if (filename == "") {
-        filename = "./results.txt";
+        filename = "./results " + this->id + ".txt";
     }
 
     std::ofstream fs;

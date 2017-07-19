@@ -1,4 +1,16 @@
-#include "COREM/core/retina.h"
+#include <corem/retina.h>
+
+#define NPY_NO_DEPRECATED_API
+//#define NPY_1_7_API_VERSION
+
+template <class T>
+std::vector<T> *extract_vector(py::list l) {
+    std::vector<T> *ret = new std::vector<T>;
+    unsigned long len = py::extract<unsigned long>(l.attr("__len__")());
+    for (unsigned long i = 0; i < len; ++i)
+        ret->push_back(py::extract<T>(l[i]));
+    return ret;
+}
 
 // step is in ms
 void Retina::Py_TempStep(int step) { config->simulationStep = step; }
@@ -8,7 +20,7 @@ void Retina::Py_SimTime(int sim_time) { config->simulationTime = sim_time; }
 
 void Retina::Py_NumTrials(int ntrials) { config->numTrials = ntrials; }
 
-void Retina::Py_PixelsPerDegree(int ppd) { config->pixelsPerDegree = ppd; }
+void Retina::Py_PixelsPerDegree(double ppd) { config->pixelsPerDegree = ppd; }
 
 void Retina::Py_DisplayDelay(int delay) { config->displayDelay = delay; }
 
@@ -16,7 +28,7 @@ void Retina::Py_DisplayZoom(int zoom) { config->displayZoom = zoom; }
 
 void Retina::Py_DisplayWindows(int windows_per_row) {
     if (windows_per_row > 0) {
-        this->displayMg.setImagesPerRow(windows_per_row);
+        this->displayMg->setImagesPerRow(windows_per_row);
     } else {
         std::cout << "Error: windows_per_row <= 0" << std::endl;
         return;
@@ -24,8 +36,10 @@ void Retina::Py_DisplayWindows(int windows_per_row) {
 }
 
 void Retina::Py_Input(std::string input_type, py::dict args) {
+    std::map<std::string, param_val_t> params;
+    this->config->inputType = input_type;
+
     if (input_type == "sequence") {
-        std::map<std::string, param_val_t> params;
         params["path"].s =
             new std::string(py::extract<std::string>(args["path"]));
         params["time_per_image"].u =
@@ -33,22 +47,12 @@ void Retina::Py_Input(std::string input_type, py::dict args) {
             config->simulationStep;
 
         this->inputModule = new Sequence(0, 0, params);
-        unsigned int cols, rows;
-        this->inputModule->getSize(cols, rows);
-        this->config->columns = cols;
-        this->config->rows = rows;
     } else if (input_type == "image") {
-        std::map<std::string, param_val_t> params;
         params["path"].s =
             new std::string(py::extract<std::string>(args["path"]));
 
         this->inputModule = new ImageSource(0, 0, params);
-        unsigned int cols, rows;
-        this->inputModule->getSize(cols, rows);
-        this->config->columns = cols;
-        this->config->rows = rows;
     } else if (input_type == "grating") {
-        std::map<std::string, param_val_t> params;
         params["ptype"].i = (int)py::extract<float>(args["type"]);
         params["pstep"].d = (double)py::extract<float>(args["step"]);
         params["plengthB"].d = (double)py::extract<float>(args["length1"]);
@@ -70,14 +74,9 @@ void Retina::Py_Input(std::string input_type, py::dict args) {
         params["pblue_phi"].d = (double)py::extract<float>(args["blue_phase"]);
 
         inputModule =
-            new GratingGenerator(py::extract<float>(args["columns"]),
-                                 py::extract<float>(args["rows"]), params);
-
-        this->config->columns = py::extract<unsigned int>(args["columns"]);
-        this->config->rows = py::extract<unsigned int>(args["rows"]);
+            new GratingGenerator(py::extract<int>(args["columns"]),
+                                 py::extract<int>(args["rows"]), params);
     } else if (input_type == "fixationalMovGrating") {
-        std::map<std::string, param_val_t> params;
-
         params["radius"].d = (double)py::extract<float>(args["circle_radius"]);
         params["jitter"].d = (double)py::extract<float>(args["jitter_period"]);
         params["period"].d = (double)py::extract<float>(args["spatial_period"]);
@@ -97,16 +96,10 @@ void Retina::Py_Input(std::string input_type, py::dict args) {
             (int)py::extract<float>(args["switch"]);  // was ts
 
         this->inputModule =
-            new FixationalMovGrating(py::extract<float>(args["columns"]),
-                                     py::extract<float>(args["rows"]), params);
-
-        this->config->columns = py::extract<unsigned int>(args["columns"]);
-        this->config->rows = py::extract<unsigned int>(args["rows"]);
+            new FixationalMovGrating(py::extract<int>(args["columns"]),
+                                     py::extract<int>(args["rows"]), params);
         // this->setRepetitions(1.0);
     } else if (input_type == "whiteNoise") {
-        // TODO: check return value
-        std::map<std::string, param_val_t> params;
-
         params["mean"].d = (double)py::extract<float>(args["mean"]);
         params["contrast1"].d = (double)py::extract<float>(args["contrast1"]);
         params["contrast2"].d = (double)py::extract<float>(args["contrast2"]);
@@ -114,36 +107,54 @@ void Retina::Py_Input(std::string input_type, py::dict args) {
         params["switchT"].d = (double)py::extract<float>(args["switch"]);
 
         this->inputModule =
-            new WhiteNoise(py::extract<float>(args["sizeX"]),
-                           py::extract<float>(args["sizeY"]), params);
+            new WhiteNoise(py::extract<int>(args["sizeX"]),
+                           py::extract<int>(args["sizeY"]), params);
         ((WhiteNoise *)this->inputModule)
             ->initializeDist(simState->currentTrial);
-
-        this->config->columns = py::extract<unsigned int>(args["sizeX"]);
-        this->config->rows = py::extract<unsigned int>(args["sizeY"]);
     } else if (input_type == "impulse") {
-        std::map<std::string, param_val_t> params;
-
         params["start"].d = (double)py::extract<float>(args["start"]);
         params["stop"].d = (double)py::extract<float>(args["stop"]);
         params["amplitude"].d = (double)py::extract<float>(args["amplitude"]);
         params["offset"].d = (double)py::extract<float>(args["offset"]);
 
-        inputModule = new Impulse(py::extract<float>(args["columns"]),
-                                  py::extract<float>(args["rows"]), params);
+        inputModule = new Impulse(py::extract<int>(args["columns"]),
+                                  py::extract<int>(args["rows"]), params);
+    } else if (input_type == "localized_impulse") {
+        params["start"].vi =
+            extract_vector<int>(py::extract<py::list>(args["start"]));
+        params["stop"].vi =
+            extract_vector<int>(py::extract<py::list>(args["stop"]));
+        params["amplitude"].vd =
+            extract_vector<double>(py::extract<py::list>(args["amplitude"]));
+        params["offset"].d = py::extract<double>(args["offset"]);
+        params["startX"].vi =
+            extract_vector<int>(py::extract<py::list>(args["startX"]));
+        params["startY"].vi =
+            extract_vector<int>(py::extract<py::list>(args["startY"]));
+        params["sizeX"].vi =
+            extract_vector<int>(py::extract<py::list>(args["sizeX"]));
+        params["sizeY"].vi =
+            extract_vector<int>(py::extract<py::list>(args["sizeY"]));
 
-        this->config->columns = py::extract<unsigned int>(args["columns"]);
-        this->config->rows = py::extract<unsigned int>(args["rows"]);
+        inputModule =
+            new LocalizedImpulse(py::extract<int>(args["columns"]),
+                                 py::extract<int>(args["rows"]), params);
     } else if (input_type == "camera") {
         py::tuple size = py::extract<py::tuple>(args["size"]);
-        this->config->columns = py::extract<unsigned int>(size[0]);
-        this->config->rows = py::extract<unsigned int>(size[1]);
+        this->config->columns = py::extract<int>(size[0]);
+        this->config->rows = py::extract<int>(size[1]);
     } else {
         throw std::runtime_error("Error: invalid input type.");
     }
 
+    if (this->inputModule != NULL)  // The only exception for now is camera
+        this->inputModule->getSize(this->config->columns, this->config->rows);
     this->initialize();
-    this->displayMg.addInputDisplay();
+    this->displayMg->addInputDisplay();
+    this->displayMg->addDisplay("L_cones");
+    this->displayMg->addDisplay("M_cones");
+    this->displayMg->addDisplay("S_cones");
+    this->displayMg->addDisplay("rods");
 }
 
 void invalid_parameter(std::string what, std::string param) {
@@ -160,8 +171,8 @@ LinearFilter *createLinearFilter(retina_config_t *conf, std::string id,
     unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
 
     std::string type;
-    double tau;
-    double n;
+    double tau = 0.0;
+    double n = 0.0;
 
     for (unsigned int i = 0; i < len; i++) {
         py::object key, v;
@@ -169,7 +180,6 @@ LinearFilter *createLinearFilter(retina_config_t *conf, std::string id,
         v = vals.attr("next")();
         std::string k = py::extract<std::string>(key);
 
-        param_val_t param;
         if (k == "type") {
             type = py::extract<std::string>(args[k].attr("__str__")());
         } else if (k == "tau") {
@@ -191,9 +201,9 @@ SingleCompartment *createSingleCompartment(retina_config_t *conf,
     const py::object vals = args.itervalues();
     unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
 
-    double Cm, Rm, tau;
+    double Cm = 0.0, Rm = 0.0, tau = 0.0;
     std::vector<double> E;
-    unsigned int number_current_ports, number_conductance_ports;
+    unsigned int number_current_ports = 0, number_conductance_ports = 0;
 
     for (unsigned int i = 0; i < len; i++) {
         py::object key, v;
@@ -223,7 +233,7 @@ SingleCompartment *createSingleCompartment(retina_config_t *conf,
     }
 
     return new SingleCompartment(id, conf, number_current_ports,
-                                 number_conductance_ports, Rm, tau, Cm, E);
+                                 number_conductance_ports, Cm, Rm, tau, E);
 }
 
 StaticNonLinearity *createNonLinearity(retina_config_t *conf, std::string id,
@@ -233,7 +243,7 @@ StaticNonLinearity *createNonLinearity(retina_config_t *conf, std::string id,
     const py::object vals = args.itervalues();
     unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
 
-    double slope, offset, exponent;
+    double slope = 0.0, offset = 0.0, exponent = 0.0;
     double threshold = std::numeric_limits<double>::infinity();
 
     for (unsigned int i = 0; i < len; i++) {
@@ -277,35 +287,35 @@ CustomNonLinearity *createCustomNonLinearity(retina_config_t *conf,
         if (k == "slope") {
             unsigned long param_len =
                 py::extract<unsigned long>(args[k].attr("__len__")());
-            for (int i = 0; i < param_len; ++i) {
+            for (unsigned long i = 0; i < param_len; ++i) {
                 slope.push_back(
                     py::extract<double>(args[k].attr("__getitem__")(i)));
             }
         } else if (k == "offset") {
             unsigned long param_len =
                 py::extract<unsigned long>(args[k].attr("__len__")());
-            for (int i = 0; i < param_len; ++i) {
+            for (unsigned long i = 0; i < param_len; ++i) {
                 offset.push_back(
                     py::extract<double>(args[k].attr("__getitem__")(i)));
             }
         } else if (k == "exponent") {
             unsigned long param_len =
                 py::extract<unsigned long>(args[k].attr("__len__")());
-            for (int i = 0; i < param_len; ++i) {
+            for (unsigned long i = 0; i < param_len; ++i) {
                 exponent.push_back(
                     py::extract<double>(args[k].attr("__getitem__")(i)));
             }
         } else if (k == "start") {
             unsigned long param_len =
                 py::extract<unsigned long>(args[k].attr("__len__")());
-            for (int i = 0; i < param_len; ++i) {
+            for (unsigned long i = 0; i < param_len; ++i) {
                 start.push_back(
                     py::extract<double>(args[k].attr("__getitem__")(i)));
             }
         } else if (k == "end") {
             unsigned long param_len =
                 py::extract<unsigned long>(args[k].attr("__len__")());
-            for (int i = 0; i < param_len; ++i) {
+            for (unsigned long i = 0; i < param_len; ++i) {
                 end.push_back(
                     py::extract<double>(args[k].attr("__getitem__")(i)));
             }
@@ -326,10 +336,11 @@ ShortTermPlasticity *createShortTermPlasticity(retina_config_t *conf,
     const py::object vals = args.itervalues();
     unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
 
-    double slope, offset, exponent, kf, kd, vinf, tau;
+    double slope = 0.0, offset = 0.0, exponent = 0.0, kf = 0.0, kd = 0.0,
+           vinf = 0.0, tau = 0.0;
     double threshold = std::numeric_limits<double>::infinity();
 
-    for (unsigned int i = 0; i < len; i++) {
+    for (unsigned long i = 0; i < len; i++) {
         py::object key, v;
         key = keys.attr("next")();
         v = vals.attr("next")();
@@ -356,8 +367,8 @@ ShortTermPlasticity *createShortTermPlasticity(retina_config_t *conf,
         }
     }
 
-    return new ShortTermPlasticity(id, conf, slope, offset, exponent, kf, kd,
-                                   tau, vinf, threshold);
+    return new ShortTermPlasticity(id, conf, slope, offset, exponent, threshold,
+                                   kf, kd, tau, vinf);
 }
 
 GaussFilter *createGaussFilter(retina_config_t *conf, std::string id,
@@ -366,7 +377,7 @@ GaussFilter *createGaussFilter(retina_config_t *conf, std::string id,
     const py::object vals = args.itervalues();
     unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
 
-    double sigma;
+    double sigma = 0.0;
 
     for (unsigned int i = 0; i < len; i++) {
         py::object key, v;
@@ -374,7 +385,6 @@ GaussFilter *createGaussFilter(retina_config_t *conf, std::string id,
         v = vals.attr("next")();
         std::string k = py::extract<std::string>(key);
 
-        param_val_t param;
         if (k == "sigma") {
             sigma = py::extract<double>(args[k]);
         } else {
@@ -392,7 +402,7 @@ SpaceVariantGaussFilter *createSpaceVariantGaussFilter(retina_config_t *conf,
     const py::object vals = args.itervalues();
     unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
 
-    double sigma, K, R0;
+    double sigma = 0.0, K = 0.0, R0 = 0.0;
     for (unsigned int i = 0; i < len; i++) {
         py::object key, v;
         key = keys.attr("next")();
@@ -415,14 +425,86 @@ SpaceVariantGaussFilter *createSpaceVariantGaussFilter(retina_config_t *conf,
 
 Parrot *createParrot(retina_config_t *conf, std::string id,
                      const py::dict &args) {
+    const py::object keys = args.iterkeys();
+    const py::object vals = args.itervalues();
     unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
 
-    if (len != 0) {
-        std::cerr << "Unexpected parameters when adding Parrot." << std::endl;
-        std::runtime_error("Unexpected parameter when adding Parrot.");
+    double gain = 0.0;
+
+    for (unsigned int i = 0; i < len; i++) {
+        py::object key, v;
+        key = keys.attr("next")();
+        v = vals.attr("next")();
+        std::string k = py::extract<std::string>(key);
+
+        if (k == "gain") {
+            gain = py::extract<double>(args[k]);
+        } else {
+            invalid_parameter("Parrot", k);
+        }
     }
 
-    return new Parrot(id, conf);
+    return new Parrot(id, conf, gain);
+}
+
+HighPass *createHighPass(retina_config_t *conf, std::string id,
+                         const py::dict &args) {
+    const py::object keys = args.iterkeys();
+    const py::object vals = args.itervalues();
+    unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
+
+    double w = 0.0, tau = 0.0;
+
+    for (unsigned int i = 0; i < len; i++) {
+        py::object key, v;
+        key = keys.attr("next")();
+        v = vals.attr("next")();
+        std::string k = py::extract<std::string>(key);
+
+        if (k == "w") {
+            w = py::extract<double>(args[k]);
+        } else if (k == "tau") {
+            tau = py::extract<double>(args[k]);
+        } else {
+            invalid_parameter("HighPass", k);
+        }
+    }
+
+    return new HighPass(id, conf, w, tau);
+}
+
+Rectification *createRectification(retina_config_t *conf, std::string id,
+                                   const py::dict &args) {
+    const py::object keys = args.iterkeys();
+    const py::object vals = args.itervalues();
+    unsigned long len = py::extract<unsigned long>(args.attr("__len__")());
+
+    double T0 = 0.0, lambda = 0.0, V_th = 0.0;
+
+    for (unsigned int i = 0; i < len; i++) {
+        py::object key, v;
+        key = keys.attr("next")();
+        v = vals.attr("next")();
+        std::string k = py::extract<std::string>(key);
+
+        if (k == "T0") {
+            T0 = py::extract<double>(args[k]);
+        } else if (k == "lambda") {
+            lambda = py::extract<double>(args[k]);
+        } else if (k == "V_th") {
+            V_th = py::extract<double>(args[k]);
+        } else {
+            invalid_parameter("Rectification", k);
+        }
+    }
+
+    return new Rectification(id, conf, T0, lambda, V_th);
+}
+
+LIF *createSpikesLIF(retina_config_t *conf, simulation_state_t *sim_state,
+                     std::string id, const py::dict &args) {
+    UNUSED(args);  // No extra parameters are needed
+    return new LIF(id, conf, sim_state);
 }
 
 void Retina::Py_Create(std::string module_type, std::string module_id,
@@ -450,12 +532,20 @@ void Retina::Py_Create(std::string module_type, std::string module_id,
             createSpaceVariantGaussFilter(this->config, module_id, args);
     } else if (module_type == "Parrot") {
         newModule = createParrot(this->config, module_id, args);
+    } else if (module_type == "HighPass") {
+        newModule = createHighPass(this->config, module_id, args);
+    } else if (module_type == "Rectification") {
+        newModule = createRectification(this->config, module_id, args);
+    } else if (module_type == "Spikes_LIF") {
+        newModule =
+            createSpikesLIF(this->config, this->simState, module_id, args);
+        spike_sources.push_back((LIF *)newModule);
     } else {
         throw std::runtime_error("Error: invalid module type.");
     }
 
     this->addModule(newModule);
-    displayMg.addDisplay(newModule->id());
+    displayMg->addDisplay(newModule->id());
 }
 
 void Retina::Py_Connect(py::object arg0, std::string connect_to,
@@ -514,6 +604,7 @@ void Retina::Py_Connect(py::object arg0, std::string connect_to,
         }
         error("Retina::Py_Connect(" + strfrom + " -> " + connect_to +
               "): invalid synapse type.");
+        st = CURRENT;  // TODO: Just for suppressing warnings
     }
 
     // TODO: check return value
@@ -521,36 +612,37 @@ void Retina::Py_Connect(py::object arg0, std::string connect_to,
 }
 
 void Retina::Py_Show(std::string module_id, bool show, py::dict args) {
-    for (int l = 1; l < this->getNumberModules(); l++) {
-        Module *m = this->getModule(l);
-        string ID = m->id();
+    this->displayMg->show(module_id);
+    //    for (int l = 1; l < this->getNumberModules(); l++) {
+    //        Module *m = this->getModule(l);
+    //        string ID = m->id();
 
-        if (ID == module_id) {
-            if (show) {
-                this->displayMg.setIsShown(true, l);
-                this->displayMg.setIsShown(true, 0);
-            } else
-                this->displayMg.setIsShown(false, l);
-        }
+    //        if (ID == module_id) {
+    //            if (show) {
+    //                this->displayMg->setIsShown(true, l);
+    //                this->displayMg->setIsShown(true, 0);
+    //            } else
+    //                this->displayMg->setIsShown(false, l);
+    //        }
 
-        unsigned long margin = py::extract<unsigned long>(args["margin"]);
-        if (margin > 0) {
-            this->displayMg.setMargin(margin, l);
-        }
-    }
+    //        unsigned long margin = py::extract<unsigned long>(args["margin"]);
+    //        if (margin > 0) {
+    //            this->displayMg->setMargin(margin, l);
+    //        }
+    //    }
 
-    if (module_id == "Input") {
-        if (show) {
-            this->displayMg.setIsShown(true, 0);
-        } else {
-            this->displayMg.setIsShown(false, 0);
-        }
+    //    if (module_id == "Input") {
+    //        if (show) {
+    //            this->displayMg->setIsShown(true, 0);
+    //        } else {
+    //            this->displayMg->setIsShown(false, 0);
+    //        }
 
-        unsigned long margin = py::extract<unsigned long>(args["margin"]);
-        if (margin > 0) {
-            this->displayMg.setMargin(margin, 0);
-        }
-    }
+    //        unsigned long margin = py::extract<unsigned long>(args["margin"]);
+    //        if (margin > 0) {
+    //            this->displayMg->setMargin(margin, 0);
+    //        }
+    //    }
 }
 
 void Retina::Py_Multimeter(std::string multimeter_type,
@@ -561,12 +653,12 @@ void Retina::Py_Multimeter(std::string multimeter_type,
 
     Multimeter *mul;
     Module *module = NULL;
-    CImg<double> *src_img;
+    const CImg<double> *src_img = NULL;
 
-    unsigned int cols = this->config->columns;
-    unsigned int rows = this->config->rows;
+    int cols = this->config->columns;
+    int rows = this->config->rows;
 
-    for (unsigned int k = 1; k < this->modules.size() && module == NULL; k++) {
+    for (int k = 1; k < (int)this->modules.size() && module == NULL; k++) {
         if (this->modules[k]->id() == module_id) {
             module = this->modules[k];
         }
@@ -579,20 +671,20 @@ void Retina::Py_Multimeter(std::string multimeter_type,
     }
 
     if (module_id == "Input")
-        src_img = &this->input;
+        src_img = this->input;
     else if (module_id == "L_cones")
-        src_img = &ch1;
+        src_img = L_cones;
     else if (module_id == "M_cones")
-        src_img = &ch2;
+        src_img = M_cones;
     else if (module_id == "S_cones")
-        src_img = &ch3;
+        src_img = S_cones;
     else if (module_id == "rods")
-        src_img = &rods;
+        src_img = rods;
 
     if (multimeter_type == "spatial") {
-        unsigned row_or_col = py::extract<unsigned int>(args["line"]);
+        int row_or_col = py::extract<int>(args["line"]);
         std::string orientation = py::extract<std::string>(args["orientation"]);
-        unsigned int timeToShow = py::extract<unsigned int>(args["timeStep"]);
+        int timeToShow = py::extract<int>(args["timeStep"]);
 
         Orientation or_;
 
@@ -608,29 +700,18 @@ void Retina::Py_Multimeter(std::string multimeter_type,
     } else if (multimeter_type == "temporal") {
         mul = new TemporalMultimeter(
             cols, rows, this->config, multimeter_id,
-            this->config->simulationTime, py::extract<unsigned int>(args["x"]),
-            py::extract<unsigned int>(args["y"]), config->simulationStep);
-        /* this->displayMg.addMultimeterTempSpat(
-            multimeter_id, module_id, py::extract<int>(args["x"]),
-            py::extract<int>(args["y"]), true, showstr); */
+            this->config->simulationTime, py::extract<int>(args["x"]),
+            py::extract<int>(args["y"]), config->simulationStep);
     } else if (multimeter_type == "linear-nonlinear") {
         // TODO: despaghettify LNMultimeter and put it here
-        mul = new LNMultimeter(cols, rows, this->config, multimeter_id,
-                               this->config->simulationTime,
-                               py::extract<unsigned int>(args["x"]),
-                               py::extract<unsigned int>(args["y"]),
-                               py::extract<double>(args["segment"]),
-                               py::extract<double>(args["interval"]),
-                               py::extract<double>(args["start"]),
-                               py::extract<double>(args["stop"]));
-        /* this->displayMg.addMultimeterLN(
-            multimeter_id, module_id, py::extract<int>(args["x"]),
-            py::extract<int>(args["y"]),
-           py::extract<double>(args["segment"]),
+        mul = new LNMultimeter(
+            cols, rows, this->config, multimeter_id,
+            this->config->simulationTime, py::extract<int>(args["x"]),
+            py::extract<int>(args["y"]), py::extract<double>(args["segment"]),
             py::extract<double>(args["interval"]),
             py::extract<double>(args["start"]),
-            py::extract<double>(args["stop"]), showstr); */
-        mul->setSourceImage(&this->input);
+            py::extract<double>(args["stop"]));
+        mul->setSourceImage(this->input);
 
     } else {
         std::cout << "Error: invalid multimeter type." << std::endl;
@@ -643,6 +724,31 @@ void Retina::Py_Multimeter(std::string multimeter_type,
     else
         mul->setSourceImage(src_img);
     multimeters.push_back(mul);
+}
+
+void q() { import_array(); }
+
+py::object Retina::convertToPythonImage(const CImg<double> *img) {
+    PyObject *res;
+
+    q();
+
+    if (img->spectrum() == 1) {
+        npy_intp size[] = {img->height(), img->width()};
+        res = PyArray_SimpleNew(2, size, NPY_DOUBLE);
+    } else {
+        npy_intp size[] = {img->height(), img->width(), img->spectrum()};
+        res = PyArray_SimpleNew(3, size, NPY_DOUBLE);
+    }
+
+    double *res_data = static_cast<double *>(PyArray_DATA(res));
+
+    cimg_forXYC(*img, x, y, c) {
+        res_data[y * img->width() * img->spectrum() + x * img->spectrum() + c] =
+            (*img)(x, y, 0, c);
+    }
+
+    return py::object(py::handle<>(res));
 }
 
 CImg<double> *Retina::convertImage(const boost::python::api::object &img) {
@@ -660,8 +766,8 @@ CImg<double> *Retina::convertImage(const boost::python::api::object &img) {
 }
 
 CImg<double> *Retina::convertndarray(const boost::python::api::object &img) {
-    unsigned int cols = this->config->columns;
-    unsigned int rows = this->config->rows;
+    int cols = this->config->columns;
+    int rows = this->config->rows;
 
     CImg<double> *ret = new CImg<double>(cols, rows, 1, 3, 0.0);
 
@@ -670,28 +776,75 @@ CImg<double> *Retina::convertndarray(const boost::python::api::object &img) {
     py::object data = img.attr("data");
     bool isReadBuffer = !PyObject_AsReadBuffer(data.ptr(), &buffer, &bufLen);
 
+    //    std::cout << "isReadBuffer: " << isReadBuffer << std::endl;
+    //    std::cout << "bufLen: " << bufLen << std::endl;
+    //    std::cout << "cols: " << cols << std::endl;
+    //    std::cout << "rows: " << rows << std::endl;
+
     if (!isReadBuffer || bufLen != 3 * cols * rows) {
         throw std::invalid_argument("Something is wrong with the image.");
     }
 
     unsigned char *buf = (unsigned char *)buffer;
 
-    for (unsigned int i = 0; i < cols; i++) {
-        for (unsigned int j = 0; j < rows; j++) {
+    for (int i = 0; i < cols; i++) {
+        for (int j = 0; j < rows; j++) {
             (*ret)(i, j, 0, 0) = buf[3 * (i + j * cols)];
             (*ret)(i, j, 0, 1) = buf[3 * (i + j * cols) + 1];
             (*ret)(i, j, 0, 2) = buf[3 * (i + j * cols) + 2];
         }
     }
 
+    //    std::cout << "convertndarray ende" << std::endl;
+
     return ret;
 }
 
-void Retina::Py_Step(const py::object &img) {
-    CImg<double> *inputImg = this->convertImage(img);
-    this->step(inputImg);
+void Retina::Py_Tweak(const std::string module, const py::list E) {
+    SingleCompartment *sc = (SingleCompartment *)this->getModule(module);
+    sc->tweak(*extract_vector<double>(E));
 }
+
+void Retina::Py_Step(const py::object &img) {
+    const CImg<double> *inputImg = this->convertImage(img);
+    this->step(inputImg);
+    delete inputImg;
+}
+
+void Retina::Py_Step() { this->step(); }
+
+void Retina::Py_Run() { this->run(); }
 
 double Retina::Py_GetValue(int row, int col, string layer) {
     return this->getValue(row * this->config->columns + col, layer);
 }
+
+py::object Retina::Py_GetOutput(std::string module) {
+    return this->convertToPythonImage(this->getModule(module)->getOutput());
+}
+
+py::object Retina::Py_GetSpikes(std::string module) {
+    SpikeSource *s = (SpikeSource *)this->getModule(module);
+    std::vector<spike_t> spikes = s->getSpikes();
+    std::cout << "spikes.size() " << spikes.size() << std::endl;
+    PyObject *res;
+
+    q();
+
+    std::cout << "spikes.size() " << spikes.size() << std::endl;
+
+    npy_intp size[] = {(int)spikes.size(), 3};
+    res = PyArray_SimpleNew(2, size, NPY_DOUBLE);
+    double *res_data = static_cast<double *>(PyArray_DATA(res));
+
+    for (int i = 0; i < (int)spikes.size(); i++) {
+        std::cout << spikes[i].time;
+        res_data[3 * i] = spikes[i].time;
+        res_data[3 * i + 1] = spikes[i].x;
+        res_data[3 * i + 2] = spikes[i].y;
+    }
+
+    return py::object(py::handle<>(res));
+}
+
+void Retina::Py_Stats() { this->stats(); }

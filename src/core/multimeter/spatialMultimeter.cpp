@@ -1,22 +1,14 @@
-#include "COREM/core/multimeter/spatialMultimeter.h"
+#include <corem/multimeter/spatialMultimeter.h>
 
-SpatialMultimeter::SpatialMultimeter(unsigned int columns, unsigned int rows,
+SpatialMultimeter::SpatialMultimeter(int columns, int rows,
                                      retina_config_t *conf, std::string id,
-                                     unsigned int timeToShow,
-                                     Orientation orientation,
-                                     unsigned int row_or_column)
+                                     int timeToShow, Orientation orientation,
+                                     int row_or_column)
     : Multimeter(columns, rows, conf, id, timeToShow) {
     this->or_ = orientation;
     this->line = row_or_column;
 
-    unsigned int dim;
-    if (or_ == HORIZONTAL) {
-        dim = columns;
-    } else if (or_ == VERTICAL) {
-        dim = rows;
-    } else {
-        throw std::runtime_error("Invalid orientation.");
-    }
+    assert(or_ == HORIZONTAL || or_ == VERTICAL);
 }
 
 void SpatialMultimeter::dump(std::string filename) {
@@ -25,7 +17,7 @@ void SpatialMultimeter::dump(std::string filename) {
 }
 
 void SpatialMultimeter::record(/* CImg<double> *image */) {
-    CImg<double> *image;
+    const CImg<double> *image;
     if (this->source_module != NULL)
         image = this->source_module->getOutput();
     else
@@ -52,7 +44,7 @@ void SpatialMultimeter::record(/* CImg<double> *image */) {
     }
 }
 
-void SpatialMultimeter::showGP(unsigned int start_from) {
+void SpatialMultimeter::showGP(int start_from) {
     if (!this->showable) {
         std::cerr << "Warning: this multimeter is not showable, terminating."
                   << std::endl;

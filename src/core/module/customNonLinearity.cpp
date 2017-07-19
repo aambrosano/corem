@@ -1,4 +1,4 @@
-#include <COREM/core/module/customNonLinearity.h>
+#include <corem/module/customNonLinearity.h>
 
 CustomNonLinearity::CustomNonLinearity(std::string id, retina_config_t *conf,
                                        std::vector<double> slope,
@@ -25,11 +25,13 @@ CustomNonLinearity::~CustomNonLinearity() {
 }
 
 void CustomNonLinearity::update() {
+    c_begin = clock();
+    b_begin = boost::chrono::system_clock::now();
     // The module is not connected
     if (this->source_ports.size() == 0) return;
 
     // copy input image
-    *inputImage_ = this->source_ports[0].getData();
+    inputImage_->assign(*(this->source_ports[0].getData()));
 
     // Probably obtainable with some threshold functions
     // piecewise function
@@ -49,6 +51,13 @@ void CustomNonLinearity::update() {
     }
 
     *outputImage_ = *inputImage_;
+    c_end = clock();
+    b_end = boost::chrono::system_clock::now();
+    this->elapsed_time += double(c_end - c_begin) / CLOCKS_PER_SEC;
+    this->elapsed_wall_time +=
+        ((boost::chrono::duration<double>)(b_end - b_begin)).count();
 }
 
-CImg<double> *CustomNonLinearity::getOutput() { return outputImage_; }
+const CImg<double> *CustomNonLinearity::getOutput() const {
+    return outputImage_;
+}

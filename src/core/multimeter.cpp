@@ -1,23 +1,27 @@
-#include <COREM/core/multimeter.h>
+#include <corem/multimeter.h>
 
-Multimeter::Multimeter(unsigned int columns, unsigned int rows,
-                       retina_config_t *conf, std::string id,
-                       unsigned int timeToShow)
-    : columns(columns),
+Multimeter::Multimeter(int columns, int rows, retina_config_t *conf,
+                       std::string id, int timeToShow)
+    : config(conf),
+      columns(columns),
       rows(rows),
-      config(conf),
-      id(id),
       timeToShow(timeToShow),
+      id(id),
       showable(true),
       source_image(NULL),
-      source_module(NULL) {}
+      source_module(NULL) {
+    assert(columns > 0);
+    assert(rows > 0);
+}
+
+Multimeter::~Multimeter() {}
 
 void Multimeter::saveArray(std::vector<double> array, std::string path) {
     fs::path resultsFile = Multimeter::getExecutablePath() / "results" / path;
     std::ifstream fin;
     std::ofstream fout;
 
-    unsigned int idx = 0;
+    int idx = 0;
     if (fs::is_regular_file(resultsFile)) {
         // Update the values
         double tmp;
@@ -34,7 +38,7 @@ void Multimeter::saveArray(std::vector<double> array, std::string path) {
     fout.open(resultsFile.string().c_str());
     fout.precision(64);
 
-    for (unsigned int i = 0; i < array.size() - 1; i++) {
+    for (int i = 0; i < (int)array.size() - 1; i++) {
         fout << array[i];
         fout << std::endl;
     }
@@ -43,7 +47,7 @@ void Multimeter::saveArray(std::vector<double> array, std::string path) {
     fout.close();
 }
 
-unsigned int Multimeter::showTime() { return this->timeToShow; }
+int Multimeter::showTime() { return this->timeToShow; }
 
 void Multimeter::setShowable(bool showable) { this->showable = showable; }
 
@@ -55,7 +59,7 @@ void Multimeter::setSourceModule(Module *m) {
     this->source_module = m;
 }
 
-void Multimeter::setSourceImage(CImg<double> *img) {
+void Multimeter::setSourceImage(const CImg<double> *img) {
     if (this->source_module != NULL)
         std::cerr << "Warning: this multimeter has already a source module, "
                      "the source image will be ignored."

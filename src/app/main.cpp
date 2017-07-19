@@ -11,25 +11,20 @@
  * SeeAlso:InterfaceNEST
  */
 
-#include <COREM/core/constants.h>
-#include <COREM/core/retina.h>
+#include <corem/constants.h>
+#include <corem/retina.h>
 
 #include <CImg.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/python.hpp>
-#ifdef DEBUG
-#include <boost/chrono.hpp>
-#endif
 
 using namespace cimg_library;
 using namespace std;
 
 namespace fs = boost::filesystem;
 namespace py = boost::python;
-#ifdef DEBUG
 namespace bchrono = boost::chrono;
-#endif
 
 CImg<double> *custom_img(int currTime, int width, int height) {
     CImg<double> *retval = new CImg<double>(width, height, 1, 3);
@@ -134,6 +129,30 @@ CImg<double> put_pulse_ball(CImg<double> *img, double freq, double t,
 }
 
 int main(int argc, char *argv[]) {
+    UNUSED(argc);
+    UNUSED(argv);
+    Retina retina;
+    //    retina.loadCircuit(
+    //        "/home/alessandro/NRP/Experiments/retina_icub/"
+    //        "green_tracking_retina.py");
+
+    retina.loadCircuit((string)argv[1]);
+    boost::chrono::system_clock::time_point start =
+        boost::chrono::system_clock::now();
+    clock_t begin = clock();
+    for (int i = 0; i < 50; i++) {
+        retina.step();
+    }
+
+    clock_t end = clock();
+    std::cout << "Total CPU time: " << (double)(end - begin) / CLOCKS_PER_SEC
+              << std::endl;
+    boost::chrono::duration<double> sec =
+        boost::chrono::system_clock::now() - start;
+    std::cout << "Total wall clock time:  " << sec.count() << " seconds\n";
+
+    retina.stats();
+    return 0;
     //    std::vector<unsigned int> qq;
     //    for (unsigned int i = 0; i < 255; i++) qq.push_back(i);
     //    std::vector<unsigned int> qq2;
@@ -151,46 +170,48 @@ int main(int argc, char *argv[]) {
     //    plot2.send1d(boost::make_tuple(qq, qq2));
     //    return 1;
 
-    boost::filesystem::path currentDirRoot(boost::filesystem::current_path());
+    //    boost::filesystem::path
+    //    currentDirRoot(boost::filesystem::current_path());
 
-    // delete files in results folder (if any)
-    fs::path resultsDir = currentDirRoot / "results";
-    fs::remove_all(resultsDir);
+    //    // delete files in results folder (if any)
+    //    fs::path resultsDir = currentDirRoot / "results";
+    //    fs::remove_all(resultsDir);
 
-    // Create retina interface
-    fs::path retinaPath;
+    //    // Create retina interface
+    //    fs::path retinaPath;
 
-    // read arguments or default script
-    if (argc == 1) {
-        retinaPath = currentDirRoot / constants::retinaScript;
-    } else {
-        retinaPath = (string)argv[1];
-        if (!fs::exists(retinaPath))
-            retinaPath = currentDirRoot / (string)argv[1];
-        if (!fs::exists(retinaPath)) {
-            std::cout << "Wrong retina file path" << std::endl;
-            return EXIT_FAILURE;
-        }
-    }
+    //    // read arguments or default script
+    //    if (argc == 1) {
+    //        retinaPath = currentDirRoot / constants::retinaScript;
+    //    } else {
+    //        retinaPath = (string)argv[1];
+    //        if (!fs::exists(retinaPath))
+    //            retinaPath = currentDirRoot / (string)argv[1];
+    //        if (!fs::exists(retinaPath)) {
+    //            std::cout << "Wrong retina file path" << std::endl;
+    //            return EXIT_FAILURE;
+    //        }
+    //    }
 
-    Retina retina;
-    retina.loadCircuit(retinaPath.string());
+    //    Retina retina;
+    //    retina.loadCircuit(retinaPath.string());
 
-#ifdef DEBUG
-    bchrono::time_point<bchrono::system_clock> start =
-        bchrono::system_clock::now();
-#endif
+    //#ifdef DEBUG
+    //    bchrono::time_point<bchrono::system_clock> start =
+    //        bchrono::system_clock::now();
+    //#endif
 
-    retina.run();
+    //    retina.run();
 
-#ifdef DEBUG
-    bchrono::duration<double> diff = bchrono::system_clock::now() - start;
-    std::cout << "main(): total time: " << diff.count() << ", frame rate: "
-              << (retina.getConfig()->simulationTime /
-                  retina.getConfig()->simulationStep) /
-                     diff.count()
-              << std::endl;
-#endif
+    //#ifdef DEBUG
+    //    bchrono::duration<double> diff = bchrono::system_clock::now() - start;
+    //    std::cout << "main(): total time: " << diff.count() << ", frame rate:
+    //    "
+    //              << (retina.getConfig()->simulationTime /
+    //                  retina.getConfig()->simulationStep) /
+    //                     diff.count()
+    //              << std::endl;
+    //#endif
 
-    return 0;
+    //    return 0;
 }

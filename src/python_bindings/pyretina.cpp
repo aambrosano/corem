@@ -1,4 +1,4 @@
-#include <COREM/core/retina.h>
+#include <corem/retina.h>
 #include <boost/python.hpp>
 
 #define BOOST_PYTHON_STATIC_LIB

@@ -1,4 +1,4 @@
-#include <COREM/core/module/spaceVariantGaussFilter.h>
+#include <corem/module/spaceVariantGaussFilter.h>
 #include <cassert>
 
 SpaceVariantGaussFilter::SpaceVariantGaussFilter(std::string id,
@@ -33,8 +33,8 @@ SpaceVariantGaussFilter::SpaceVariantGaussFilter(std::string id,
     B_m_ = CImg<double>(columns, rows, 1, 1, 0.1);
     M_m_ = CImg<double>(columns, rows, 9, 1, 0.1);
 
-    for (unsigned int i = 0; i < columns; i++) {
-        for (unsigned int j = 0; j < rows; j++) {
+    for (int i = 0; i < columns; i++) {
+        for (int j = 0; j < rows; j++) {
             // update sigma value
             r = sqrt((double(i) - floor(columns / 2)) *
                          (double(i) - floor(columns / 2)) +
@@ -111,58 +111,58 @@ SpaceVariantGaussFilter::~SpaceVariantGaussFilter() {
     delete buffer_;
 }
 
-void SpaceVariantGaussFilter::gaussHorizontal(CImg<double> &src) {
+void SpaceVariantGaussFilter::gaussHorizontal(CImg<double> *src) {
 #pragma omp parallel for
 
     for (int i = 0; i < rows; i++) {
         double *temp2 = buffer_ + omp_get_thread_num() * (columns + rows);
 
-        temp2[0] = B_m_(0, i, 0) * (double)src(0, i, 0) +
-                   b1_m_(0, i, 0) * (double)src(0, i, 0) +
-                   b2_m_(0, i, 0) * (double)src(0, i, 0) +
-                   b3_m_(0, i, 0) * (double)src(0, i, 0);
+        temp2[0] = B_m_(0, i, 0) * (double)(*src)(0, i, 0) +
+                   b1_m_(0, i, 0) * (double)(*src)(0, i, 0) +
+                   b2_m_(0, i, 0) * (double)(*src)(0, i, 0) +
+                   b3_m_(0, i, 0) * (double)(*src)(0, i, 0);
 
-        temp2[1] = B_m_(1, i, 0) * (double)src(1, i, 0) +
+        temp2[1] = B_m_(1, i, 0) * (double)(*src)(1, i, 0) +
                    b1_m_(1, i, 0) * temp2[0] +
-                   b2_m_(1, i, 0) * (double)src(0, i, 0) +
-                   b3_m_(1, i, 0) * (double)src(0, i, 0);
+                   b2_m_(1, i, 0) * (double)(*src)(0, i, 0) +
+                   b3_m_(1, i, 0) * (double)(*src)(0, i, 0);
 
-        temp2[2] = B_m_(2, i, 0) * (double)src(2, i, 0) +
+        temp2[2] = B_m_(2, i, 0) * (double)(*src)(2, i, 0) +
                    b1_m_(2, i, 0) * temp2[1] + b2_m_(2, i, 0) * temp2[0] +
-                   b3_m_(2, i, 0) * (double)src(0, i, 0);
+                   b3_m_(2, i, 0) * (double)(*src)(0, i, 0);
 
-        for (unsigned int j = 3; j < columns; j++)
-            temp2[j] = B_m_(j, i, 0) * (double)src(j, i, 0) +
+        for (int j = 3; j < columns; j++)
+            temp2[j] = B_m_(j, i, 0) * (double)(*src)(j, i, 0) +
                        b1_m_(j, i, 0) * temp2[j - 1] +
                        b2_m_(j, i, 0) * temp2[j - 2] +
                        b3_m_(j, i, 0) * temp2[j - 3];
 
         double temp2Wm1 =
-            (double)src(columns - 1, i, 0) +
+            (double)(*src)(columns - 1, i, 0) +
             M_m_(0, i, 0) *
-                (temp2[columns - 1] - (double)src(columns - 1, i, 0)) +
+                (temp2[columns - 1] - (double)(*src)(columns - 1, i, 0)) +
             M_m_(0, i, 1) *
-                (temp2[columns - 2] - (double)src(columns - 1, i, 0)) +
+                (temp2[columns - 2] - (double)(*src)(columns - 1, i, 0)) +
             M_m_(0, i, 2) *
-                (temp2[columns - 3] - (double)src(columns - 1, i, 0));
+                (temp2[columns - 3] - (double)(*src)(columns - 1, i, 0));
 
         double temp2W =
-            (double)src(columns - 1, i, 0) +
+            (double)(*src)(columns - 1, i, 0) +
             M_m_(0, i, 3) *
-                (temp2[columns - 1] - (double)src(columns - 1, i, 0)) +
+                (temp2[columns - 1] - (double)(*src)(columns - 1, i, 0)) +
             M_m_(0, i, 4) *
-                (temp2[columns - 2] - (double)src(columns - 1, i, 0)) +
+                (temp2[columns - 2] - (double)(*src)(columns - 1, i, 0)) +
             M_m_(0, i, 5) *
-                (temp2[columns - 3] - (double)src(columns - 1, i, 0));
+                (temp2[columns - 3] - (double)(*src)(columns - 1, i, 0));
 
         double temp2Wp1 =
-            (double)src(columns - 1, i, 0) +
+            (double)(*src)(columns - 1, i, 0) +
             M_m_(0, i, 6) *
-                (temp2[columns - 1] - (double)src(columns - 1, i, 0)) +
+                (temp2[columns - 1] - (double)(*src)(columns - 1, i, 0)) +
             M_m_(0, i, 7) *
-                (temp2[columns - 2] - (double)src(columns - 1, i, 0)) +
+                (temp2[columns - 2] - (double)(*src)(columns - 1, i, 0)) +
             M_m_(0, i, 8) *
-                (temp2[columns - 3] - (double)src(columns - 1, i, 0));
+                (temp2[columns - 3] - (double)(*src)(columns - 1, i, 0));
 
         temp2[columns - 1] = temp2Wm1;
 
@@ -176,60 +176,58 @@ void SpaceVariantGaussFilter::gaussHorizontal(CImg<double> &src) {
                              b2_m_(columns - 3, i, 0) * temp2[columns - 1] +
                              b3_m_(columns - 3, i, 0) * temp2W;
 
-        for (unsigned int j = columns - 4; j != static_cast<unsigned int>(-1);
-             j--)
+        for (int j = columns - 4; j != -1; j--)
             temp2[j] =
                 B_m_(j, i, 0) * temp2[j] + b1_m_(j, i, 0) * temp2[j + 1] +
                 b2_m_(j, i, 0) * temp2[j + 2] + b3_m_(j, i, 0) * temp2[j + 3];
 
-        for (unsigned int j = 0; j < columns; j++)
-            src(j, i, 0) = (double)temp2[j];
+        for (int j = 0; j < columns; j++) (*src)(j, i, 0) = (double)temp2[j];
     }
 }
 
-void SpaceVariantGaussFilter::gaussVertical(CImg<double> &src) {
+void SpaceVariantGaussFilter::gaussVertical(CImg<double> *src) {
 #pragma omp parallel for
 
     for (int i = 0; i < columns; i++) {
         double *temp2 = buffer_ + omp_get_thread_num() * (columns + rows);
 
-        temp2[0] = B_m_(i, 0, 0) * (double)src(i, 0, 0) +
-                   b1_m_(i, 0, 0) * (double)src(i, 0, 0) +
-                   b2_m_(i, 0, 0) * (double)src(i, 0, 0) +
-                   b3_m_(i, 0, 0) * (double)src(i, 0, 0);
+        temp2[0] = B_m_(i, 0, 0) * (double)(*src)(i, 0, 0) +
+                   b1_m_(i, 0, 0) * (double)(*src)(i, 0, 0) +
+                   b2_m_(i, 0, 0) * (double)(*src)(i, 0, 0) +
+                   b3_m_(i, 0, 0) * (double)(*src)(i, 0, 0);
 
-        temp2[1] = B_m_(i, 1, 0) * (double)src(i, 1, 0) +
+        temp2[1] = B_m_(i, 1, 0) * (double)(*src)(i, 1, 0) +
                    b1_m_(i, 1, 0) * temp2[0] +
-                   b2_m_(i, 1, 0) * (double)src(i, 0, 0) +
-                   b3_m_(i, 1, 0) * (double)src(i, 0, 0);
+                   b2_m_(i, 1, 0) * (double)(*src)(i, 0, 0) +
+                   b3_m_(i, 1, 0) * (double)(*src)(i, 0, 0);
 
-        temp2[2] = B_m_(i, 2, 0) * (double)src(i, 2, 0) +
+        temp2[2] = B_m_(i, 2, 0) * (double)(*src)(i, 2, 0) +
                    b1_m_(i, 2, 0) * temp2[1] + b2_m_(i, 2, 0) * temp2[0] +
-                   b3_m_(i, 2, 0) * (double)src(i, 0, 0);
+                   b3_m_(i, 2, 0) * (double)(*src)(i, 0, 0);
 
-        for (unsigned int j = 3; j < rows; j++)
-            temp2[j] = B_m_(i, j, 0) * (double)src(i, j, 0) +
+        for (int j = 3; j < rows; j++)
+            temp2[j] = B_m_(i, j, 0) * (double)(*src)(i, j, 0) +
                        b1_m_(i, j, 0) * temp2[j - 1] +
                        b2_m_(i, j, 0) * temp2[j - 2] +
                        b3_m_(i, j, 0) * temp2[j - 3];
 
         double temp2Wm1 =
-            (double)src(i, rows - 1, 0) +
-            M_m_(i, 0, 0) * (temp2[rows - 1] - (double)src(i, rows - 1, 0)) +
-            M_m_(i, 0, 1) * (temp2[rows - 2] - (double)src(i, rows - 1, 0)) +
-            M_m_(i, 0, 2) * (temp2[rows - 3] - (double)src(i, rows - 1, 0));
+            (double)(*src)(i, rows - 1, 0) +
+            M_m_(i, 0, 0) * (temp2[rows - 1] - (double)(*src)(i, rows - 1, 0)) +
+            M_m_(i, 0, 1) * (temp2[rows - 2] - (double)(*src)(i, rows - 1, 0)) +
+            M_m_(i, 0, 2) * (temp2[rows - 3] - (double)(*src)(i, rows - 1, 0));
 
         double temp2W =
-            (double)src(i, rows - 1, 0) +
-            M_m_(i, 0, 3) * (temp2[rows - 1] - (double)src(i, rows - 1, 0)) +
-            M_m_(i, 0, 4) * (temp2[rows - 2] - (double)src(i, rows - 1, 0)) +
-            M_m_(i, 0, 5) * (temp2[rows - 3] - (double)src(i, rows - 1, 0));
+            (double)(*src)(i, rows - 1, 0) +
+            M_m_(i, 0, 3) * (temp2[rows - 1] - (double)(*src)(i, rows - 1, 0)) +
+            M_m_(i, 0, 4) * (temp2[rows - 2] - (double)(*src)(i, rows - 1, 0)) +
+            M_m_(i, 0, 5) * (temp2[rows - 3] - (double)(*src)(i, rows - 1, 0));
 
         double temp2Wp1 =
-            (double)src(i, rows - 1, 0) +
-            M_m_(i, 0, 6) * (temp2[rows - 1] - (double)src(i, rows - 1, 0)) +
-            M_m_(i, 0, 7) * (temp2[rows - 2] - (double)src(i, rows - 1, 0)) +
-            M_m_(i, 0, 8) * (temp2[rows - 3] - (double)src(i, rows - 1, 0));
+            (double)(*src)(i, rows - 1, 0) +
+            M_m_(i, 0, 6) * (temp2[rows - 1] - (double)(*src)(i, rows - 1, 0)) +
+            M_m_(i, 0, 7) * (temp2[rows - 2] - (double)(*src)(i, rows - 1, 0)) +
+            M_m_(i, 0, 8) * (temp2[rows - 3] - (double)(*src)(i, rows - 1, 0));
 
         temp2[rows - 1] = temp2Wm1;
 
@@ -243,28 +241,37 @@ void SpaceVariantGaussFilter::gaussVertical(CImg<double> &src) {
                           b2_m_(i, rows - 3, 0) * temp2[rows - 1] +
                           b3_m_(i, rows - 3, 0) * temp2W;
 
-        for (unsigned int j = rows - 4; j != static_cast<unsigned int>(-1); j--)
+        for (int j = rows - 4; j != -1; j--)
             temp2[j] =
                 B_m_(i, j, 0) * temp2[j] + b1_m_(i, j, 0) * temp2[j + 1] +
                 b2_m_(i, j, 0) * temp2[j + 2] + b3_m_(i, j, 0) * temp2[j + 3];
 
-        for (unsigned int j = 0; j < rows; j++) src(i, j, 0) = (double)temp2[j];
+        for (int j = 0; j < rows; j++) (*src)(i, j, 0) = (double)temp2[j];
     }
 }
 
 void SpaceVariantGaussFilter::update() {
+    c_begin = clock();
+    b_begin = boost::chrono::system_clock::now();
     // The module is not connected
     if (this->source_ports.size() == 0) return;
 
-    inputImage_->assign(this->source_ports[0].getData());
+    inputImage_->assign(*(this->source_ports[0].getData()));
 
-    gaussVertical(*inputImage_);
-    gaussHorizontal(*inputImage_);
+    gaussVertical(inputImage_);
+    gaussHorizontal(inputImage_);
 
     *outputImage_ = *inputImage_;
+    c_end = clock();
+    b_end = boost::chrono::system_clock::now();
+    this->elapsed_time += double(c_end - c_begin) / CLOCKS_PER_SEC;
+    this->elapsed_wall_time +=
+        ((boost::chrono::duration<double>)(b_end - b_begin)).count();
 }
 
-CImg<double> *SpaceVariantGaussFilter::getOutput() { return outputImage_; }
+const CImg<double> *SpaceVariantGaussFilter::getOutput() const {
+    return outputImage_;
+}
 
 double SpaceVariantGaussFilter::density(double r) {
     // cell density

@@ -1,12 +1,17 @@
-#include <COREM/core/displayManager.h>
+#include <corem/displayManager.h>
 
 DisplayManager::DisplayManager() {
     config = NULL;
     last_row = 0;
     last_col = 0;
     imagesPerRow = 4;
+}
 
-    valuesAllocated = false;
+DisplayManager::~DisplayManager() {
+    std::vector<DisplayWithBar *>::iterator dwb;
+    for (dwb = displays.begin(); dwb != displays.end(); ++dwb) {
+        delete *dwb;
+    }
 }
 
 void DisplayManager::reset() {
@@ -14,8 +19,6 @@ void DisplayManager::reset() {
     last_col = 0;
     imagesPerRow = 0;
     imagesPerRow = 4;
-
-    valuesAllocated = false;
 }
 
 void DisplayManager::setImagesPerRow(int numberI) { imagesPerRow = numberI; }
@@ -85,27 +88,42 @@ void DisplayManager::addDisplay(string ID) {
 #endif
 }
 
-void DisplayManager::updateDisplay(Input *input, vector<Module *> &modules,
-                                   unsigned int switchTime,
-                                   unsigned int currentTime,
-                                   unsigned int trial) {
-#if cimg_display != 0
-    // Display input
-    if (isShown[0]) {
-        displays[0]->update(input->getData(currentTime));
-    }
-
-    // show modules
-    for (int k = 0; k < modules.size() - 1; k++) {
-        if (isShown[k + 1]) {
-            //            if (k == 0) d.display(*(modules[k + 1]->getOutput()));
-            displays[k + 1]->update(modules[k + 1]->getOutput());
+void DisplayManager::show(std::string id) {
+    for (int i = 0; i < (int)displays.size(); i++) {
+        if (displays[i]->id == id) {
+            isShown[i] = true;
+            displays[i]->show();
         }
     }
+}
 
-    // Show displays if there's an input display
-    if (isShown[0]) {
-        displays[0]->wait(config->displayDelay);
+void DisplayManager::updateDisplays(const CImg<double> *input,
+                                    CImg<double> *photoreceptors[4],
+                                    std::vector<Module *> modules,
+                                    simulation_state_t *sim_state) {
+#if cimg_display != 0
+    // Display input
+    std::string id;
+    for (int i = 0; i < (int)displays.size(); i++) {
+        if (!isShown[i]) continue;
+        id = displays[i]->id;
+        if (id == "Input") {
+            displays[i]->update(input);
+        } else if (id == "L_cones") {
+            displays[i]->update(photoreceptors[0]);
+        } else if (id == "M_cones") {
+            displays[i]->update(photoreceptors[1]);
+        } else if (id == "S_cones") {
+            displays[i]->update(photoreceptors[2]);
+        } else if (id == "rods") {
+            displays[i]->update(photoreceptors[3]);
+        } else {
+            for (unsigned int j = 0; j < modules.size(); j++) {
+                if (modules[j]->id() == id) {
+                    displays[i]->update(modules[j]->getOutput());
+                }
+            }
+        }
     }
 #endif
 }

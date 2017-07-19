@@ -1,4 +1,4 @@
-#include <COREM/core/module/gaussFilter.h>
+#include <corem/module/gaussFilter.h>
 #include <cassert>
 
 GaussFilter::GaussFilter(std::string id, retina_config_t *conf, double sigma)
@@ -53,47 +53,49 @@ GaussFilter::GaussFilter(std::string id, retina_config_t *conf, double sigma)
 GaussFilter::~GaussFilter() {
     delete inputImage_;
     delete outputImage_;
-    delete buffer_;
+    delete[] buffer_;
 }
 
 //------------------------------------------------------------------------------//
 
-void GaussFilter::gaussVertical(CImg<double> &src) {
-#pragma omp parallel for
+void GaussFilter::gaussVertical(CImg<double> *src) {
+    //#pragma omp parallel for num_threads(4)
 
     for (int i = 0; i < columns; i++) {
         double *temp2 = buffer_ + omp_get_thread_num() * (columns + rows);
 
-        temp2[0] = B_ * (double)src(i, 0, 0) + b1_ * (double)src(i, 0, 0) +
-                   b2_ * (double)src(i, 0, 0) + b3_ * (double)src(i, 0, 0);
+        temp2[0] =
+            B_ * (double)(*src)(i, 0, 0) + b1_ * (double)(*src)(i, 0, 0) +
+            b2_ * (double)(*src)(i, 0, 0) + b3_ * (double)(*src)(i, 0, 0);
 
-        temp2[1] = B_ * (double)src(i, 1, 0) + b1_ * temp2[0] +
-                   b2_ * (double)src(i, 0, 0) + b3_ * (double)src(i, 0, 0);
+        temp2[1] = B_ * (double)(*src)(i, 1, 0) + b1_ * temp2[0] +
+                   b2_ * (double)(*src)(i, 0, 0) +
+                   b3_ * (double)(*src)(i, 0, 0);
 
-        temp2[2] = B_ * (double)src(i, 2, 0) + b1_ * temp2[1] + b2_ * temp2[0] +
-                   b3_ * (double)src(i, 0, 0);
+        temp2[2] = B_ * (double)(*src)(i, 2, 0) + b1_ * temp2[1] +
+                   b2_ * temp2[0] + b3_ * (double)(*src)(i, 0, 0);
 
-        for (unsigned int j = 3; j < rows; j++)
-            temp2[j] = B_ * (double)src(i, j, 0) + b1_ * temp2[j - 1] +
+        for (int j = 3; j < rows; j++)
+            temp2[j] = B_ * (double)(*src)(i, j, 0) + b1_ * temp2[j - 1] +
                        b2_ * temp2[j - 2] + b3_ * temp2[j - 3];
 
         double temp2Wm1 =
-            (double)src(i, rows - 1, 0) +
-            M_[0][0] * (temp2[rows - 1] - (double)src(i, rows - 1, 0)) +
-            M_[0][1] * (temp2[rows - 2] - (double)src(i, rows - 1, 0)) +
-            M_[0][2] * (temp2[rows - 3] - (double)src(i, rows - 1, 0));
+            (double)(*src)(i, rows - 1, 0) +
+            M_[0][0] * (temp2[rows - 1] - (double)(*src)(i, rows - 1, 0)) +
+            M_[0][1] * (temp2[rows - 2] - (double)(*src)(i, rows - 1, 0)) +
+            M_[0][2] * (temp2[rows - 3] - (double)(*src)(i, rows - 1, 0));
 
         double temp2W =
-            (double)src(i, rows - 1, 0) +
-            M_[1][0] * (temp2[rows - 1] - (double)src(i, rows - 1, 0)) +
-            M_[1][1] * (temp2[rows - 2] - (double)src(i, rows - 1, 0)) +
-            M_[1][2] * (temp2[rows - 3] - (double)src(i, rows - 1, 0));
+            (double)(*src)(i, rows - 1, 0) +
+            M_[1][0] * (temp2[rows - 1] - (double)(*src)(i, rows - 1, 0)) +
+            M_[1][1] * (temp2[rows - 2] - (double)(*src)(i, rows - 1, 0)) +
+            M_[1][2] * (temp2[rows - 3] - (double)(*src)(i, rows - 1, 0));
 
         double temp2Wp1 =
-            (double)src(i, rows - 1, 0) +
-            M_[2][0] * (temp2[rows - 1] - (double)src(i, rows - 1, 0)) +
-            M_[2][1] * (temp2[rows - 2] - (double)src(i, rows - 1, 0)) +
-            M_[2][2] * (temp2[rows - 3] - (double)src(i, rows - 1, 0));
+            (double)(*src)(i, rows - 1, 0) +
+            M_[2][0] * (temp2[rows - 1] - (double)(*src)(i, rows - 1, 0)) +
+            M_[2][1] * (temp2[rows - 2] - (double)(*src)(i, rows - 1, 0)) +
+            M_[2][2] * (temp2[rows - 3] - (double)(*src)(i, rows - 1, 0));
 
         temp2[rows - 1] = temp2Wm1;
         temp2[rows - 2] = B_ * temp2[rows - 2] + b1_ * temp2[rows - 1] +
@@ -102,50 +104,58 @@ void GaussFilter::gaussVertical(CImg<double> &src) {
         temp2[rows - 3] = B_ * temp2[rows - 3] + b1_ * temp2[rows - 2] +
                           b2_ * temp2[rows - 1] + b3_ * temp2W;
 
-        for (unsigned int j = rows - 4; j != static_cast<unsigned int>(-1); j--)
+        for (int j = rows - 4; j != -1; j--)
             temp2[j] = B_ * temp2[j] + b1_ * temp2[j + 1] + b2_ * temp2[j + 2] +
                        b3_ * temp2[j + 3];
 
-        for (unsigned int j = 0; j < rows; j++) src(i, j, 0) = (double)temp2[j];
+        for (int j = 0; j < rows; j++) (*src)(i, j, 0) = (double)temp2[j];
     }
 }
 
-void GaussFilter::gaussHorizontal(CImg<double> &src) {
-#pragma omp parallel for
+void GaussFilter::gaussHorizontal(CImg<double> *src) {
+    //#pragma omp parallel for num_threads(4)
 
     for (int i = 0; i < rows; i++) {
         double *temp2 = buffer_ + omp_get_thread_num() * (rows + columns);
 
-        temp2[0] = B_ * (double)src(0, i, 0) + b1_ * (double)src(0, i, 0) +
-                   b2_ * (double)src(0, i, 0) + b3_ * (double)src(0, i, 0);
+        temp2[0] =
+            B_ * (double)(*src)(0, i, 0) + b1_ * (double)(*src)(0, i, 0) +
+            b2_ * (double)(*src)(0, i, 0) + b3_ * (double)(*src)(0, i, 0);
 
-        temp2[1] = B_ * (double)src(1, i, 0) + b1_ * temp2[0] +
-                   b2_ * (double)src(0, i, 0) + b3_ * (double)src(0, i, 0);
+        temp2[1] = B_ * (double)(*src)(1, i, 0) + b1_ * temp2[0] +
+                   b2_ * (double)(*src)(0, i, 0) +
+                   b3_ * (double)(*src)(0, i, 0);
 
-        temp2[2] = B_ * (double)src(2, i, 0) + b1_ * temp2[1] + b2_ * temp2[0] +
-                   b3_ * (double)src(0, i, 0);
+        temp2[2] = B_ * (double)(*src)(2, i, 0) + b1_ * temp2[1] +
+                   b2_ * temp2[0] + b3_ * (double)(*src)(0, i, 0);
 
-        for (unsigned int j = 3; j < columns; j++)
-            temp2[j] = B_ * (double)src(j, i, 0) + b1_ * temp2[j - 1] +
+        for (int j = 3; j < columns; j++)
+            temp2[j] = B_ * (double)(*src)(j, i, 0) + b1_ * temp2[j - 1] +
                        b2_ * temp2[j - 2] + b3_ * temp2[j - 3];
 
         double temp2Wm1 =
-            (double)src(columns - 1, i, 0) +
-            M_[0][0] * (temp2[columns - 1] - (double)src(columns - 1, i, 0)) +
-            M_[0][1] * (temp2[columns - 2] - (double)src(columns - 1, i, 0)) +
-            M_[0][2] * (temp2[columns - 3] - (double)src(columns - 1, i, 0));
+            (double)(*src)(columns - 1, i, 0) +
+            M_[0][0] *
+                (temp2[columns - 1] - (double)(*src)(columns - 1, i, 0)) +
+            M_[0][1] *
+                (temp2[columns - 2] - (double)(*src)(columns - 1, i, 0)) +
+            M_[0][2] * (temp2[columns - 3] - (double)(*src)(columns - 1, i, 0));
 
         double temp2W =
-            (double)src(columns - 1, i, 0) +
-            M_[1][0] * (temp2[columns - 1] - (double)src(columns - 1, i, 0)) +
-            M_[1][1] * (temp2[columns - 2] - (double)src(columns - 1, i, 0)) +
-            M_[1][2] * (temp2[columns - 3] - (double)src(columns - 1, i, 0));
+            (double)(*src)(columns - 1, i, 0) +
+            M_[1][0] *
+                (temp2[columns - 1] - (double)(*src)(columns - 1, i, 0)) +
+            M_[1][1] *
+                (temp2[columns - 2] - (double)(*src)(columns - 1, i, 0)) +
+            M_[1][2] * (temp2[columns - 3] - (double)(*src)(columns - 1, i, 0));
 
         double temp2Wp1 =
-            (double)src(columns - 1, i, 0) +
-            M_[2][0] * (temp2[columns - 1] - (double)src(columns - 1, i, 0)) +
-            M_[2][1] * (temp2[columns - 2] - (double)src(columns - 1, i, 0)) +
-            M_[2][2] * (temp2[columns - 3] - (double)src(columns - 1, i, 0));
+            (double)(*src)(columns - 1, i, 0) +
+            M_[2][0] *
+                (temp2[columns - 1] - (double)(*src)(columns - 1, i, 0)) +
+            M_[2][1] *
+                (temp2[columns - 2] - (double)(*src)(columns - 1, i, 0)) +
+            M_[2][2] * (temp2[columns - 3] - (double)(*src)(columns - 1, i, 0));
 
         temp2[columns - 1] = temp2Wm1;
 
@@ -157,27 +167,34 @@ void GaussFilter::gaussHorizontal(CImg<double> &src) {
                              b1_ * temp2[columns - 2] +
                              b2_ * temp2[columns - 1] + b3_ * temp2W;
 
-        for (unsigned int j = columns - 4; j != static_cast<unsigned int>(-1);
-             j--)
+        for (int j = columns - 4; j != -1; j--)
             temp2[j] = B_ * temp2[j] + b1_ * temp2[j + 1] + b2_ * temp2[j + 2] +
                        b3_ * temp2[j + 3];
 
-        for (unsigned int j = 0; j < columns; j++)
-            src(j, i, 0) = (double)temp2[j];
+        for (int j = 0; j < columns; j++) (*src)(j, i, 0) = (double)temp2[j];
     }
 }
 
 void GaussFilter::update() {
+    c_begin = clock();
+    b_begin = boost::chrono::system_clock::now();
     // The module is not connected
     if (this->source_ports.size() == 0) return;
 
-    inputImage_->assign(this->source_ports[0].getData());
+    // memcpy(inputImage_->_data, this->source_ports[0].getData()->_data,
+    //        inputImage_->size() * sizeof(double));
+    inputImage_->assign(*(this->source_ports[0].getData()));
 
     // Do not invert the two computation steps
-    gaussVertical(*inputImage_);
-    gaussHorizontal(*inputImage_);
+    gaussVertical(inputImage_);
+    gaussHorizontal(inputImage_);
 
     *outputImage_ = *inputImage_;
+    c_end = clock();
+    b_end = boost::chrono::system_clock::now();
+    this->elapsed_time += double(c_end - c_begin) / CLOCKS_PER_SEC;
+    this->elapsed_wall_time +=
+        ((boost::chrono::duration<double>)(b_end - b_begin)).count();
 }
 
-CImg<double> *GaussFilter::getOutput() { return outputImage_; }
+const CImg<double> *GaussFilter::getOutput() const { return outputImage_; }

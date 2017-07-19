@@ -1,24 +1,6 @@
-#include <COREM/core/displayWithBar.h>
+#include <corem/displayWithBar.h>
 
 #include <boost/lexical_cast.hpp>
-
-double DisplayWithBar::findMin(CImg<double> *input) {
-    double min = DBL_INF;
-    cimg_forXY(*(input), x, y) {
-        if ((*input)(x, y, 0, 0) < min) min = (*input)(x, y, 0, 0);
-    }
-
-    return min;
-}
-
-double DisplayWithBar::findMax(CImg<double> *input) {
-    double max = -DBL_INF;
-    cimg_forXY(*(input), x, y) {
-        if ((*input)(x, y, 0, 0) > max) max = (*input)(x, y, 0, 0);
-    }
-
-    return max;
-}
 
 DisplayWithBar::DisplayWithBar(string name, int columns, int rows,
                                bool withBar /* = true */,
@@ -28,7 +10,8 @@ DisplayWithBar::DisplayWithBar(string name, int columns, int rows,
       rows_(rows),
       withBar(withBar),
       barSize(barSize),
-      trueColor(trueColor) {
+      trueColor(trueColor),
+      id(name) {
     bar = new CImg<double>(barSize, (int)rows_, 1, 1);
 
     if (withBar) {
@@ -39,6 +22,8 @@ DisplayWithBar::DisplayWithBar(string name, int columns, int rows,
 
     display.set_title(name.c_str());
 }
+
+DisplayWithBar::~DisplayWithBar() { delete bar; }
 
 void DisplayWithBar::updateBar(double min, double max) {
     const unsigned char colorWhite[] = {255, 255, 255};
@@ -73,33 +58,29 @@ void DisplayWithBar::updateBar(double min, double max) {
     bar->draw_text(5, 10, maxString.c_str(), colorWhite, 0, 1, 20);
 }
 
-void DisplayWithBar::update(CImg<double> *img) {
-    //    std::cout << "updating displaywithbar " << this->display.title() <<
-    //    std::endl;
-    // find maximum and minimum values
-    double min = findMin(img);
-    double max = findMax(img);
-
-    //    d.display(*img);
+void DisplayWithBar::update(const CImg<double> *img) {
     CImg<double> displayImage = *img;
 
-    //    min = img->min_max(max);
+    double min;
+    double max;
+
+    min = displayImage.min_max(max);
 
     if (withBar) updateBar(min, max);
 
     if (!trueColor) {
         // Crop image
-        img->crop(margin_, margin_, 0, 0, img->width() - margin_ - 1,
-                  img->height() - margin_ - 1, 0, 0, false);
+        displayImage.crop(margin_, margin_, 0, 0,
+                          displayImage.width() - margin_ - 1,
+                          displayImage.height() - margin_ - 1, 0, 0, false);
         // displayImage = (img->normalize(min, max))
         if (max - min > DBL_EPSILON) {
-            displayImage = (255 * (*img - min) / (max - min))
+            displayImage = (255 * (displayImage - min) / (max - min))
                                .resize(columns_, rows_)
                                .map(CImg<double>::jet_LUT256());
             //            displayImage = img->normalize(0, 255);
         } else {
-            displayImage = (*img + 0)
-                               .resize(columns_, rows_)
+            displayImage = displayImage.resize(columns_, rows_)
                                .map(CImg<double>::jet_LUT256());
         }
     } else {

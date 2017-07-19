@@ -1,28 +1,16 @@
-#include <COREM/core/input/sequence.h>
+#include <corem/input/sequence.h>
 
 #include <boost/filesystem.hpp>
 
 namespace fs = boost::filesystem;
 
-const std::map<std::string, param_val_t> Sequence::defaultParams =
-    Sequence::createDefaults();
-
-std::map<std::string, param_val_t> Sequence::createDefaults() {
-    std::map<std::string, param_val_t> ret;
-
-    ret["path"].s = new std::string(".");
-    ret["steps_per_image"].u = 1;
-
-    return ret;
-}
-
-Sequence::Sequence(unsigned int columns_, unsigned int rows_,
+Sequence::Sequence(int columns_, int rows_,
                    std::map<std::string, param_val_t> params)
-    : Input(columns_, rows_, params, "Sequence") {
+    : Input(columns_, rows_, params) {
     std::vector<std::string> result;
 
-    std::string path = *getParam("path", params, defaultParams).s;
-    time_per_image = getParam("time_per_image", params, defaultParams).u;
+    std::string path = *getParam("path", params).s;
+    time_per_image = getParam("time_per_image", params).u;
 
     if (!fs::exists(path) || !fs::is_directory(path))
         throw std::runtime_error(
@@ -41,8 +29,8 @@ Sequence::Sequence(unsigned int columns_, unsigned int rows_,
     inputSeq = new CImg<double> *[result.size()];
     numberImages = result.size();
 
-    for (unsigned int i = 0; i < numberImages; i++) {
-        inputSeq[i] = new CImg<double>();
+    for (int i = 0; i < numberImages; i++) {
+        inputSeq[i] = new CImg<double>;
         inputSeq[i]->assign(result[i].c_str());
     }
 
@@ -53,11 +41,11 @@ Sequence::Sequence(unsigned int columns_, unsigned int rows_,
         std::cout << numberImages << " images read from " << path << std::endl;
 }
 
-CImg<double> *Sequence::getData(unsigned int t) {
+const CImg<double> *Sequence::getData(int t) {
     return inputSeq[std::min(numberImages - 1, t / time_per_image)];
 }
 
-void Sequence::getSize(unsigned int &columns, unsigned int &rows) {
+void Sequence::getSize(int &columns, int &rows) const {
     columns = this->columns;
     rows = this->rows;
 }
